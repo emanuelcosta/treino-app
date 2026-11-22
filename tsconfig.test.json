@@ -10,7 +10,7 @@
     "esModuleInterop": true,
     "noEmit": false,
     "incremental": false,
-    "types": []
+    "types": ["node"]
   },
-  "include": ["lib/data.ts", "lib/domain/**/*.ts"]
+  "include": ["lib/data.ts", "lib/domain/**/*.ts", "lib/strava/seal.ts"]
 }
