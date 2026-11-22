@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { dayRatio, goodDaysCount, heatLevel, lastDays, mondayOffset, streak as streakOf } from '@/lib/domain/progress';
-import { dateKey, parseBackup } from '@/lib/domain/store';
+import { dateKey, parseBackup, planCtx } from '@/lib/domain/store';
 import { useStore } from '@/lib/useStore';
+import RunProgress from './RunProgress';
 
 const HEAD = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
@@ -21,8 +22,10 @@ export default function Progress() {
   return (
     <>
       <h1>Progresso</h1>
+      <RunProgress ctx={planCtx(store, dateKey(new Date()))} />
+      <h2 className="secthead">Exercícios do dia</h2>
       <div className="stats">
-        <div className="card stat"><b>{good}</b><span className="small muted">dias com 80% ou mais, nos últimos 28</span></div>
+        <div className="card stat"><b>{good}</b><span className="small muted">dias com 80% ou mais dos exercícios, nos últimos 28</span></div>
         <div className="card stat"><b>{streak}</b><span className="small muted">dias seguidos</span></div>
       </div>
       <section className="card">
@@ -36,7 +39,7 @@ export default function Progress() {
             </span>
           ))}
         </div>
-        <p className="muted small">Cor mais forte = mais itens do dia concluídos.</p>
+        <p className="muted small">Cor mais forte = mais exercícios obrigatórios do dia concluídos (itens opcionais e a corrida não entram nesta conta).</p>
       </section>
       <section className="card">
         <h2>Backup</h2>

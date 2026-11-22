@@ -9,6 +9,8 @@ const steps: [string, string][] = [
   ['Marque o que fez', 'Toque no círculo de cada item, ou use "Marcar dia como feito" para marcar tudo de uma vez. Nos treinos de força, anote as repetições no campo de anotação para acompanhar a evolução.'],
   ['Mude o treino do seu jeito', 'Toque em "Editar treino". Você pode alterar séries e repetições, subir ou descer exercícios, remover, adicionar da biblioteca, criar um exercício seu (com seus passos e link de vídeo) ou adicionar um item livre. "Restaurar padrão" volta o dia ao original.'],
   ['Acompanhe o progresso', 'Na aba Progresso você vê os últimos 28 dias, quantos dias concluiu e sua sequência. Tudo fica salvo só neste aparelho.'],
+  ['Siga o plano de 10 km', 'São 8 semanas: corrida leve (terça), corrida com variação (quinta), longão (domingo) e regenerativo opcional (sábado), com 2 sessões de fortalecimento. Na tela Semana você muda os dias, o início e o ritmo leve. A cada semana nova, você confirma se avança, repete ou pausa: nada avança sozinho.'],
+  ['Registre a corrida', 'No card da corrida, escolha Concluído, Adiado ou Não realizado. Em Concluído, informe distância, tempo (o ritmo é calculado), esforço de 1 a 10 e se teve dor. Adiado leva o treino para outro dia, sem duplicar. O Progresso usa só o que você registrou.'],
   ['Use o cronômetro', 'Nos alongamentos, na prancha e na caminhada aparece o botão "Cronômetro". O app dá 5 s para você se posicionar, conta o tempo certo de cada série e de cada lado, avisa "troque de perna" e bipa nos 3 últimos segundos. Ao terminar, o item é marcado. Você muda os segundos em "Editar treino".'],
   ['Corra com o pomodoro', 'Na aba Pomodoro você corre em blocos: o padrão é 5 min correndo, pausa curta de 1 min 30 s caminhando e, a cada 4 blocos, pausa longa de 3 min. Mude os tempos como quiser, toque em Iniciar e guarde o celular: o app avisa com som, voz e vibração a cada troca.'],
   ['Use sem internet', 'Depois de abrir o app uma vez com internet, ele fica guardado no navegador e abre mesmo offline (na pista, no parque). Você continua marcando e anotando normalmente. Só os vídeos precisam de internet. Dica: no celular, use "Adicionar à tela inicial" para abrir como um app.'],
@@ -22,6 +24,7 @@ const gloss: [string, string][] = [
   ['Repetição e série', 'Repetição é um movimento completo. Série é um grupo de repetições seguidas. "3 x 10" = 3 séries de 10 repetições.'],
   ['Negativa', 'Na barra fixa: você sobe com ajuda (pulando ou num degrau) e desce bem devagar, em 4 a 5 segundos. Constrói a força para a barra completa.'],
   ['Aquecimento dinâmico', 'Movimentos leves e contínuos antes de correr, que preparam músculos e articulações. Alongamento parado fica para depois.'],
+  ['Esforço percebido (1 a 10)', 'Quanto o treino pareceu difícil: 1 é muito fácil e 10 é o máximo. Corrida leve fica perto de 3 a 4; os blocos moderados, de 6 a 7.'],
   ['Pomodoro', 'Treino em blocos: um tempo de esforço (correr) e uma pausa (caminhar), repetidos. Depois de alguns blocos vem uma pausa mais longa. Ajuda a correr mais tempo sem cansar demais.'],
   ['Boa forma', 'Fazer o movimento completo e controlado, sem dor aguda. É melhor fazer menos repetições bem feitas do que muitas mal feitas.'],
 ];

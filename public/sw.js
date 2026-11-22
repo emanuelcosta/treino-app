@@ -6,7 +6,7 @@
  *  - Outros domínios (YouTube etc.) não passam pelo cache.
  * Para forçar todo mundo a baixar tudo de novo, aumente VERSION.
  */
-const VERSION = 'v3';
+const VERSION = 'v4';
 const PAGES = `treino-pages-${VERSION}`;
 const STATIC = `treino-static-${VERSION}`;
 const CORE = ['/', '/semana', '/pomodoro', '/exercicios', '/progresso', '/ajuda', '/manifest.webmanifest', '/icon.svg'];

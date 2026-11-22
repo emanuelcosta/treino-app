@@ -58,7 +58,7 @@ export default function PomodoroTimer() {
   return (
     <>
       <h1>Pomodoro</h1>
-      <p className="muted">Para correr ou caminhar em blocos: o app avisa com som, voz e vibração quando é hora de correr, de fazer a pausa curta e a pausa longa. Pode deixar o celular no bolso.</p>
+      <p className="muted">Para correr ou caminhar em blocos: o app avisa com som, voz e vibração quando é hora de correr, de fazer a pausa curta e a pausa longa. Pode deixar o celular no bolso. Também serve para lembrar de levantar da cadeira (modelo &quot;Pausas no trabalho&quot;). Os treinos do plano de 10 km não dependem do Pomodoro.</p>
 
       <div className="notice">
         <p><b>Sem esforço máximo até fazer os exames</b> (eletrocardiograma e ecocardiograma). Corra em ritmo de conversa e caminhe nas pausas. Pare se sentir dor no peito, tontura ou falta de ar fora do normal.</p>
@@ -79,7 +79,7 @@ export default function PomodoroTimer() {
       <section className="card">
         <h2>Configure do seu jeito</h2>
         <div className="ivform">
-          <BlockField title="Esforço (correr)" block={cfg.work} onChange={(work) => set({ work })} />
+          <BlockField title="Bloco principal (ex.: correr)" block={cfg.work} onChange={(work) => set({ work })} />
           <BlockField title="Pausa curta" block={cfg.easy} onChange={(easy) => set({ easy })} />
           <BlockField title="Pausa longa" block={cfg.long} onChange={(long) => set({ long })} />
           <fieldset className="timefield">

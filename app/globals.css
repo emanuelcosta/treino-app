@@ -228,3 +228,70 @@ ol.steps.big li { margin: 10px 0; }
 .ivplan li.k-easy { background: var(--accent-soft); }
 .btn.wide { width: 100%; }
 @media (max-width: 420px) { .seqtimer.big .st-clock { font-size: 4.6rem; } }
+
+/* plano de 10 km */
+:root { --series-1: #2a78d6; --series-2: #eb6834; }
+@media (prefers-color-scheme: dark) { :root { --series-1: #3987e5; --series-2: #d95926; } }
+.weekpill { display: inline-block; font-size: .8rem; text-decoration: none; background: var(--accent-soft); color: var(--accent); border-radius: 99px; padding: 4px 10px; text-align: right; max-width: 190px; }
+.day .daynum { display: block; font-size: .7rem; opacity: .8; }
+.checkspace { flex: none; width: 32px; }
+.decision .row { flex-wrap: wrap; }
+.runcard { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin: 8px 0 10px; background: var(--bg); }
+.runcard.s-concluido { border-color: var(--accent); }
+.runhead { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.runtitle { font-weight: 700; }
+.badge { flex: none; font-size: .75rem; border-radius: 99px; padding: 2px 10px; background: var(--line); color: var(--text); white-space: nowrap; }
+.badge.b-concluido { background: var(--accent); color: var(--accent-ink); }
+.badge.b-adiado { background: var(--warn-bg); border: 1px solid var(--warn-line); }
+.badge.b-nao_realizado { background: transparent; border: 1px solid var(--muted); color: var(--muted); }
+.runfacts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin: 8px 0; }
+.runfacts div { min-width: 0; } .runfacts .wide { grid-column: 1 / -1; }
+.runfacts dt { font-size: .75rem; color: var(--muted); } .runfacts dd { margin: 0; font-size: .92rem; }
+.runform { display: grid; gap: 8px; margin-top: 8px; border-top: 1px solid var(--line); padding-top: 10px; }
+.runform label, .planform label { display: grid; gap: 2px; font-size: .85rem; color: var(--muted); }
+.runform input, .runform select, .runform textarea, .planform input, .planform select { font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.statusbtns { display: flex; flex-wrap: wrap; gap: 6px; }
+.tips { margin: 6px 0; padding: 8px 12px 8px 28px; background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 10px; font-size: .9rem; }
+.err { color: var(--danger); font-size: .9rem; margin: 0; padding-left: 18px; }
+.weeknav { display: flex; align-items: center; gap: 8px; }
+.weeknav-title { flex: 1; display: grid; text-align: center; }
+.weeknav .btn { min-width: 44px; font-size: 1.2rem; }
+.weeksum { margin-top: 10px; }
+.decisionbox { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
+.decisionbox select { width: 100%; }
+.calendar { list-style: none; padding: 0; margin: 0; }
+.calendar > li { display: grid; grid-template-columns: 80px 1fr; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
+.calendar > li:first-child { border-top: 0; }
+.calendar > li.is-today .calday b { color: var(--accent); }
+.calday { display: grid; align-content: start; }
+.calbody { min-width: 0; font-size: .92rem; }
+.calrun-head { display: flex; justify-content: space-between; gap: 6px; font-weight: 600; }
+.calrun .runcard { margin: 6px 0 0; padding: 8px; }
+.planform fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin: 0 0 10px; }
+.planform legend { font-weight: 600; padding: 0 4px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.secthead { margin: 18px 0 8px; }
+.stats4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 520px) { .stats4 { grid-template-columns: 1fr 1fr; } }
+.goalbar { display: grid; gap: 4px; margin: 4px 0 10px; }
+.goalbar .bar > div { background: var(--series-2); }
+.ch-wrap { position: relative; }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart text { font-size: 9px; fill: var(--muted); }
+.chart .ch-x { fill: var(--text); } .chart .ch-x.sub { fill: var(--muted); font-size: 8px; }
+.ch-axis line { stroke: var(--line); stroke-width: 1; }
+.ch-base { stroke: var(--muted); stroke-width: 1; }
+.chart .s1 { fill: var(--series-1); } .chart .s2 { fill: var(--series-2); }
+.chart .ln { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .ln.s1 { stroke: var(--series-1); } .chart .ln.s2 { stroke: var(--series-2); }
+.chart .ln.dashed { stroke-dasharray: 5 4; }
+.chart .dot { stroke: var(--card); stroke-width: 2; }
+.ch-hit { fill: transparent; } .ch-hit.on { fill: var(--accent-soft); opacity: .6; }
+.chart g:focus { outline: none; } .chart g:focus .ch-hit { fill: var(--accent-soft); }
+.ch-legend { display: flex; gap: 14px; font-size: .85rem; margin: 2px 0 6px; }
+.ch-legend i, .ch-tip i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.ch-legend i.dashed { height: 3px; width: 14px; border-radius: 0; vertical-align: 3px; }
+.ch-legend .s1, .ch-tip .s1 { background: var(--series-1); } .ch-legend .s2, .ch-tip .s2 { background: var(--series-2); }
+.ch-tip { position: absolute; top: 0; transform: translateX(-50%); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: .8rem; display: grid; gap: 2px; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,.15); white-space: nowrap; z-index: 2; }
+.runtable td, .runtable th { font-size: .85rem; }
+.runstrength .bul li { margin-bottom: 4px; }
