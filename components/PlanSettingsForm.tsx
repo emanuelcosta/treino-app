@@ -51,10 +51,10 @@ export default function PlanSettingsForm({ settings, hasLogs, onSave }: { settin
           <label>Dias por semana
             <select value={s.availableDays} onChange={(e) => set({ availableDays: Number(e.target.value) === 3 ? 3 : 4 })}>
               <option value={3}>3 (só as corridas)</option>
-              <option value={4}>4 (+ regenerativo opcional)</option>
+              <option value={4}>4 (+ trote leve curto opcional)</option>
             </select>
           </label>
-          {s.availableDays === 4 && <DaySelect label="Regenerativo (opcional)" value={s.days.regen} onChange={(d) => setDays({ regen: d })} />}
+          {s.availableDays === 4 && <DaySelect label="Trote leve curto (opcional)" value={s.days.regen} onChange={(d) => setDays({ regen: d })} />}
         </div>
         <p className="small muted">Trocar os dias não muda as distâncias do plano.</p>
       </fieldset>

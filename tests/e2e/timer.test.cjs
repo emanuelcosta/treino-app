@@ -90,9 +90,9 @@ const store = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('tre
   ok('guiado marcou o alongamento', Object.entries(s.done[DATE] || {}).length >= 3);
 
   // ---- link de intervalos só em dia de corrida ----
-  ok('terça (corrida) com botão de pomodoro', await page.getByRole('link', { name: /Abrir pomodoro/ }).isVisible());
+  ok('terça (força) sem botão de pomodoro', !(await page.getByRole('link', { name: /Abrir pomodoro/ }).count()));
   await page.getByRole('tab', { name: /^Segunda/ }).click();
-  ok('segunda (força) sem botão de pomodoro', !(await page.getByRole('link', { name: /Abrir pomodoro/ }).count()));
+  ok('segunda (corrida) com botão de pomodoro', await page.getByRole('link', { name: /Abrir pomodoro/ }).isVisible());
 
   // ---- intervalos ----
   await page.getByRole('navigation').getByRole('link', { name: 'Pomodoro' }).click();

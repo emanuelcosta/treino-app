@@ -401,9 +401,9 @@ export function runInfo(slot: 'easy' | 'tempo' | 'long' | 'regen', w: PlanWeek, 
       items: [{ title: `Correr ${km(w.long)} km`, detail: 'Bem leve. Se estiver muito cansado, encurte em vez de pular. Hidrate-se.' }] as Item[] };
   }
   if (slot === 'regen') {
-    return { title: 'Regenerativo (opcional)', km: 0, intensity: 'Muito leve', warmup: 'Sem aquecimento específico.',
-      objective: 'Soltar as pernas e recuperar. Pode pular se estiver cansado.',
-      items: [{ title: 'Caminhada ou pedal leve', detail: '20 a 30 min, bem tranquilo', optional: true }] as Item[] };
+    return { title: 'Trote leve curto (opcional)', km: 0, intensity: 'Muito leve, conversando', warmup: 'Comece caminhando 3 a 5 min.',
+      objective: 'Soltar as pernas e recuperar. Dia corrido? Encurte ou pule: não compense depois.',
+      items: [{ title: 'Trote leve ou caminhada', detail: '15 a 30 min, bem tranquilo (o tempo que der)', optional: true }] as Item[] };
   }
   const t = w.tempo;
   const items: Item[] = [{ title: `Correr ${tempoTitle(t)}`, detail: t.reps
@@ -497,8 +497,8 @@ export function buildRoutine(dow: number, role: DayRole, week: number, strength:
       sections: [runWarmup, { id: 'corrida', title: label, items: r.items }, cooldown, posture(true), night] };
   } else if (role === 'regen') {
     const r = runInfo('regen', w, pace);
-    p = { title: 'Regenerativo', subtitle: 'Opcional: caminhada ou pedal leve e mobilidade', kind: 'descanso',
-      sections: [{ id: 'corrida', title: 'Regenerativo (opcional)', items: r.items }, mobility, posture(true), night] };
+    p = { title: 'Trote leve curto', subtitle: 'Opcional: 15 a 30 min bem leve e mobilidade', kind: 'descanso',
+      sections: [{ id: 'corrida', title: 'Trote leve curto (opcional)', items: r.items }, mobility, posture(true), night] };
   } else if ((role === 'strength1' || role === 'strength2') && strength === 'calistenia') {
     p = calisthenics(role === 'strength1' ? 'A' : 'B', week);
   } else if ((role === 'strength1' || role === 'strength2') && strength === 'corrida') {

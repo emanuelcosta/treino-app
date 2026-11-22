@@ -6,7 +6,7 @@ import { clock } from './timer';
 
 // ---------------- Configuração ----------------
 export type RunSlot = 'easy' | 'tempo' | 'long' | 'regen';
-export const SLOT_LABEL: Record<RunSlot, string> = { easy: 'Corrida leve', tempo: 'Corrida com variação', long: 'Longão', regen: 'Regenerativo' };
+export const SLOT_LABEL: Record<RunSlot, string> = { easy: 'Corrida leve', tempo: 'Corrida com variação', long: 'Longão', regen: 'Trote leve curto' };
 
 /** Dia da semana (0 = domingo) de cada treino. */
 export type RunDays = { easy: number; tempo: number; long: number; regen: number; strength: [number, number] };
@@ -34,7 +34,9 @@ export type RunSettings = {
   decisions: Record<string, WeekDecision>;
 };
 
-export const DEFAULT_DAYS: RunDays = { easy: 2, tempo: 4, long: 0, regen: 6, strength: [1, 5] };
+/** Padrão: corridas na segunda, quarta e sexta (longão) e trote leve curto no domingo; fortalecimento na terça e na quinta.
+ * Sábado livre (fim de semana com menos tempo). */
+export const DEFAULT_DAYS: RunDays = { easy: 1, tempo: 3, long: 5, regen: 0, strength: [2, 4] };
 
 export function defaultRunSettings(today = new Date()): RunSettings {
   return {
@@ -53,7 +55,8 @@ const numOk = (v: unknown, def: number, min: number, max: number) => {
 export function sanitizeRunSettings(raw: unknown, today = new Date()): RunSettings {
   const d = defaultRunSettings(today);
   const r = (raw && typeof raw === 'object' ? raw : {}) as Partial<RunSettings>;
-  const days = (r.days && typeof r.days === 'object' ? r.days : {}) as Partial<RunDays>;
+  // Enquanto o usuário não salvar a configuração, os dias seguem o padrão atual do app.
+  const days = (r.confirmed === true && r.days && typeof r.days === 'object' ? r.days : {}) as Partial<RunDays>;
   const strength = Array.isArray(days.strength) ? days.strength : d.days.strength;
   const pace = Array.isArray(r.easyPace) ? r.easyPace : d.easyPace;
   const p0 = numOk(pace[0], d.easyPace[0], 180, 900), p1 = numOk(pace[1], d.easyPace[1], 180, 900);
@@ -91,7 +94,7 @@ export function validateSettings(s: RunSettings): string[] {
   take(s.days.easy, 'Corrida leve');
   take(s.days.tempo, 'Corrida com variação');
   take(s.days.long, 'Longão');
-  if (s.availableDays === 4) take(s.days.regen, 'Regenerativo');
+  if (s.availableDays === 4) take(s.days.regen, 'Trote leve curto');
   if (s.strengthPref !== 'nenhum') { take(s.days.strength[0], 'Fortalecimento 1'); take(s.days.strength[1], 'Fortalecimento 2'); }
   return errors;
 }

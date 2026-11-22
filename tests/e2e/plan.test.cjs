@@ -14,14 +14,14 @@ const visible = (loc) => loc.first().isVisible().catch(() => false);
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('dialog', (d) => d.accept());
-  await page.clock.install({ time: new Date('2026-11-24T10:00:00') }); // terça, semana 1
+  await page.clock.install({ time: new Date('2026-11-23T10:00:00') }); // segunda, semana 1
 
   // ---------- Hoje: treino do dia ----------
   await page.goto(BASE + '/');
   ok('pílula da semana: semana 1 de 8', await visible(page.getByRole('link', { name: 'Plano de 10 km · semana 1 de 8' })));
   ok('cartão de configuração inicial', await visible(page.getByText('Seu plano de 10 km em 8 semanas')));
   const card = page.locator('.runcard').first();
-  ok('terça: corrida leve de 4 km', (await card.locator('.runtitle').innerText()) === 'Corrida leve: 4 km');
+  ok('segunda: corrida leve de 4 km', (await card.locator('.runtitle').innerText()) === 'Corrida leve: 4 km');
   ok('mostra distância, duração estimada, intensidade e objetivo',
     /4 km/.test(await card.innerText()) && /25–28 min/.test(await card.innerText()) && /6:20–7:00 min\/km/.test(await card.innerText()) && /base aeróbica/.test(await card.innerText()));
   ok('status inicial pendente', (await card.locator('.badge').innerText()) === 'Pendente');
@@ -67,22 +67,22 @@ const visible = (loc) => loc.first().isVisible().catch(() => false);
   await card2.getByLabel('Percepção de esforço de 1 a 10').selectOption('5');
   await card2.getByRole('button', { name: 'Salvar registro' }).click();
 
-  // ---------- quinta: futuro + adiar ----------
-  await page.getByRole('tab', { name: /^Quinta/ }).click();
+  // ---------- quarta: futuro + adiar ----------
+  await page.getByRole('tab', { name: /^Quarta/ }).click();
   const thu = page.locator('.runcard').first();
-  ok('quinta semana 1: 4 km + 4 acelerações', (await thu.locator('.runtitle').innerText()) === 'Corrida: 4 km leve + 4 acelerações de 20 s');
+  ok('quarta semana 1: 4 km + 4 acelerações', (await thu.locator('.runtitle').innerText()) === 'Corrida: 4 km leve + 4 acelerações de 20 s');
   ok('acelerações com cronômetro de 20 s', await visible(page.getByRole('button', { name: /Cronômetro de 4 acelerações de 20 s/ })));
   await thu.getByRole('radio', { name: 'Concluído' }).click();
   await thu.getByRole('button', { name: 'Salvar registro' }).click();
   ok('não deixa concluir treino futuro', await visible(thu.getByText('Esse treino ainda não chegou')));
   await thu.getByRole('radio', { name: 'Adiado' }).click();
-  await thu.getByLabel('Nova data do treino').fill('2026-11-27');
+  await thu.getByLabel('Nova data do treino').fill('2026-11-26');
   await thu.getByRole('button', { name: 'Salvar registro' }).click();
-  ok('adiado para sexta', (await thu.locator('.badge').innerText()) === 'Adiado' && /→/.test(await thu.innerText()));
-  await page.getByRole('tab', { name: /^Sexta/ }).click();
-  ok('sexta mostra o treino remarcado', await visible(page.getByRole('heading', { name: 'Treino remarcado para este dia' })) && /4 acelerações/.test(await page.locator('.runcard').first().innerText()));
+  ok('adiado para quinta', (await thu.locator('.badge').innerText()) === 'Adiado' && /→/.test(await thu.innerText()));
+  await page.getByRole('tab', { name: /^Quinta/ }).click();
+  ok('quinta mostra o treino remarcado', await visible(page.getByRole('heading', { name: 'Treino remarcado para este dia' })) && /4 acelerações/.test(await page.locator('.runcard').first().innerText()));
   s = await store(page);
-  ok('adiar não duplica (2 registros: terça e quinta)', Object.keys(s.runLogs).length === 2);
+  ok('adiar não duplica (2 registros: segunda e quarta)', Object.keys(s.runLogs).length === 2);
 
   // ---------- Semana ----------
   await page.goto(BASE + '/semana');
@@ -91,7 +91,7 @@ const visible = (loc) => loc.first().isVisible().catch(() => false);
   ok('corridas concluídas 1 de 3', /Corridas concluídas: 1 de 3/.test(await page.locator('.weeksum').innerText()));
   const calItems = await page.locator('.calendar > li').count();
   ok('calendário com 7 dias', calItems === 7);
-  ok('descanso aparece na quarta', /Quarta[\s\S]*Descanso/.test(await page.locator('.calendar').innerText()));
+  ok('sábado livre (descanso)', /Sábado[\s\S]*Descanso/.test(await page.locator('.calendar').innerText()));
   ok('tabela de 8 semanas', (await page.locator('table tbody tr').count()) === 8);
   await page.getByRole('button', { name: 'Próxima semana' }).click();
   ok('navegar: próxima semana', await visible(page.getByText('Semana 2 de 8')) && /4,5 km com 3 × 2 min moderados/.test(await page.locator('.calendar').innerText()));
@@ -99,28 +99,28 @@ const visible = (loc) => loc.first().isVisible().catch(() => false);
 
   // configurar dias: carga igual; conflito recusado
   const form = page.locator('#configurar');
-  await form.getByLabel('Corrida leve').selectOption({ label: 'Quarta' });
+  await form.getByLabel('Corrida leve').selectOption({ label: 'Sábado' });
   await form.getByRole('button', { name: 'Salvar plano' }).click();
   ok('salva dias novos', await visible(form.getByText('Plano salvo.')));
   ok('carga igual após trocar o dia (14 km)', /de 14 km/.test(await page.locator('.weeksum').innerText()));
-  ok('corrida leve agora na quarta', /Quarta[\s\S]*Corrida leve: 4 km/.test(await page.locator('.calendar').innerText()));
-  await form.getByLabel('Corrida com variação').selectOption({ label: 'Quarta' });
+  ok('corrida leve agora no sábado', /Sábado[\s\S]*Corrida leve: 4 km/.test(await page.locator('.calendar').innerText()));
+  await form.getByLabel('Corrida com variação').selectOption({ label: 'Sábado' });
   await form.getByRole('button', { name: 'Salvar plano' }).click();
   ok('recusa dois treinos no mesmo dia', await visible(form.getByText(/Escolha dias diferentes/)));
-  await form.getByLabel('Corrida com variação').selectOption({ label: 'Quinta' });
-  await form.getByLabel('Corrida leve').selectOption({ label: 'Terça' });
+  await form.getByLabel('Corrida com variação').selectOption({ label: 'Quarta' });
+  await form.getByLabel('Corrida leve').selectOption({ label: 'Segunda' });
   await form.getByRole('button', { name: 'Salvar plano' }).click();
   s = await store(page);
-  ok('configuração confirmada e salva', s.run.confirmed === true && s.run.days.easy === 2);
+  ok('configuração confirmada e salva', s.run.confirmed === true && s.run.days.easy === 1);
   ok('data de início fixa com registros', await page.getByLabel('Data de início do plano').isDisabled());
 
   // ---------- semana nova: o usuário decide ----------
-  await page.clock.setSystemTime(new Date('2026-12-01T10:00:00'));
+  await page.clock.setSystemTime(new Date('2026-11-30T10:00:00'));
   await page.goto(BASE + '/');
   ok('semana nova pede decisão (sugere repetir: semana 1 incompleta)', await visible(page.getByText(/A semana 1 ficou incompleta/)) && await visible(page.getByRole('button', { name: 'Repetir a semana 1' })));
   await page.getByRole('button', { name: 'Avançar para a semana 2' }).click();
   ok('avançou para a semana 2 por decisão do usuário', await visible(page.getByRole('link', { name: /semana 2 de 8/ })));
-  ok('terça da semana 2: 4 km leve', (await page.locator('.runcard').first().locator('.runtitle').innerText()) === 'Corrida leve: 4 km');
+  ok('segunda da semana 2: 4 km leve', (await page.locator('.runcard').first().locator('.runtitle').innerText()) === 'Corrida leve: 4 km');
   await page.goto(BASE + '/semana');
   await page.getByLabel('Decisão da semana').selectOption('repeat');
   ok('repetir: semana 1 de novo', await visible(page.getByText('Semana 1 de 8 (repetição)')));
@@ -160,7 +160,7 @@ const visible = (loc) => loc.first().isVisible().catch(() => false);
   const c2 = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
   const p2 = await c2.newPage();
   p2.on('pageerror', (e) => errors.push(String(e)));
-  await p2.clock.install({ time: new Date('2026-11-24T10:00:00') });
+  await p2.clock.install({ time: new Date('2026-11-23T10:00:00') });
   await p2.goto(BASE + '/');
   const legacy = {
     week: 3, done: { '2026-11-20': { 'aquec:0': true, 'aquec:1': true } }, notes: { '2026-11-20': { 'treino:0': '12 reps' } },

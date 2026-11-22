@@ -33,7 +33,7 @@ Critérios: objetivo (10 km em 8 semanas, 3–4 corridas/semana), recuperação,
 
 | Treino (v1.4) | Decisão | Motivo |
 |---|---|---|
-| 4 corridas/semana (seg, qua, sex longão, dom) | **Substituir** | Trocado pelo plano de 8 semanas: terça leve, quinta com variação, domingo longão, sábado regenerativo opcional. Corridas com um dia de intervalo. |
+| Plano de 5 semanas com semana escolhida à mão | **Substituir** | Trocado pelo plano de 8 semanas. Padrão (a pedido do usuário, fim de semana com menos tempo): segunda leve, quarta com variação, sexta longão, domingo trote leve curto opcional. Corridas principais com um dia de intervalo. |
 | Longão de 10 km na semana 5 (40% do volume) | **Substituir** | Progressão do longão agora 6 → 7 → 7 → 6 → 8 → 8,5 → 9 → 10 km. |
 | Semana 4 de descarga | **Manter** | Mantida (4/4/6 km). Semana 8 também reduz antes dos 10 km. |
 | Só ritmo de conversa | **Ajustar** | Mantido como base; quinta ganha acelerações (sem. 1) e blocos moderados (6–7/10) com 2 min de trote leve entre eles. |
@@ -76,9 +76,11 @@ Critérios: objetivo (10 km em 8 semanas, 3–4 corridas/semana), recuperação,
 | Flexão fechada | **Remover** da calistenia B | Redundante com a flexão no mesmo treino. Continua na biblioteca. |
 | Aquecimento de força com agachamento e ponte | **Ajustar** | Trocado por círculos de quadril/tornozelo e gato-camelo; a 1ª série dos exercícios serve de aquecimento. |
 
-Distribuição padrão (configurável): **seg** fortalecimento · **ter** corrida leve · **qua** descanso · **qui** corrida com variação ·
-**sex** fortalecimento · **sáb** regenerativo opcional · **dom** longão. Força não fica na véspera do longão nem do treino moderado
-(o app avisa se o usuário escolher assim). A calistenia completa A/B continua disponível em "Configurar plano".
+Distribuição padrão (configurável): **seg** corrida leve · **ter** fortalecimento · **qua** corrida com variação · **qui** fortalecimento ·
+**sex** longão · **sáb** livre · **dom** trote leve curto opcional. O longão saiu do fim de semana porque o usuário tem menos tempo
+no sábado e no domingo. Compromisso: o fortalecimento de quinta fica na véspera do longão (o app avisa); a sessão é curta (2 séries,
+peso do corpo). Se as pernas chegarem pesadas no longão, mova essa sessão para outro dia em "Configurar plano".
+A calistenia completa A/B continua disponível em "Configurar plano".
 
 Nenhum exercício foi apagado da biblioteca: todos continuam em Exercícios e podem ser adicionados em "Editar treino".
 

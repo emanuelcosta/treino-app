@@ -33,16 +33,16 @@ test('gera as 8 semanas do plano com as distâncias da tabela', () => {
   assert.equal(data.tempoTitle(data.PLAN_WEEKS[7].tempo), '3 km muito leve');
 });
 
-test('dias padrão: terça leve, quinta variação, domingo longão, sábado regenerativo; força seg e sex', () => {
+test('dias padrão: segunda leve, quarta variação, sexta longão, domingo trote leve; força terça e quinta; sábado livre', () => {
   const s = settings();
   const ws = byslot(rp.workoutsOfWeek(ctx(s), 0));
-  assert.equal(ws.easy.scheduled, '2026-11-24');
-  assert.equal(ws.tempo.scheduled, '2026-11-26');
-  assert.equal(ws.regen.scheduled, '2026-11-28');
-  assert.equal(ws.long.scheduled, '2026-11-29');
-  assert.equal(rp.roleOf(s, 1), 'strength1');
-  assert.equal(rp.roleOf(s, 5), 'strength2');
-  assert.equal(rp.roleOf(s, 3), 'rest');
+  assert.equal(ws.easy.scheduled, '2026-11-23');
+  assert.equal(ws.tempo.scheduled, '2026-11-25');
+  assert.equal(ws.long.scheduled, '2026-11-27');
+  assert.equal(ws.regen.scheduled, '2026-11-29');
+  assert.equal(rp.roleOf(s, 2), 'strength1');
+  assert.equal(rp.roleOf(s, 4), 'strength2');
+  assert.equal(rp.roleOf(s, 6), 'rest');
   assert.deepEqual(rp.validateSettings(s), []);
 });
 
@@ -124,17 +124,17 @@ test('persistência: o store sobrevive a salvar e carregar (JSON)', () => {
 // 6. Reagendamento
 test('adiar leva o treino para a nova data sem duplicar', () => {
   const s = settings();
-  const tempo = byslot(rp.workoutsOfWeek(ctx(s), 0)).tempo; // quinta 26/11
-  const logs = rp.upsertLog({}, tempo, { status: 'adiado', movedTo: '2026-11-27' });
-  const thu = rp.workoutsOn(ctx(s, logs), '2026-11-26');
-  const fri = rp.workoutsOn(ctx(s, logs), '2026-11-27');
+  const tempo = byslot(rp.workoutsOfWeek(ctx(s), 0)).tempo; // quarta 25/11
+  const logs = rp.upsertLog({}, tempo, { status: 'adiado', movedTo: '2026-11-26' });
+  const thu = rp.workoutsOn(ctx(s, logs), '2026-11-25');
+  const fri = rp.workoutsOn(ctx(s, logs), '2026-11-26');
   assert.equal(thu.here.length, 0);
   assert.equal(thu.movedAway.length, 1);
   assert.equal(fri.movedIn.length, 1);
   assert.equal(fri.movedIn[0].id, tempo.id);
-  const again = rp.upsertLog(logs, tempo, { status: 'concluido', km: 4, movedTo: '2026-11-27' });
+  const again = rp.upsertLog(logs, tempo, { status: 'concluido', km: 4, movedTo: '2026-11-26' });
   assert.equal(Object.keys(again).length, 1, 'mesmo id: atualiza, não duplica');
-  assert.equal(again[tempo.id].movedTo, '2026-11-27');
+  assert.equal(again[tempo.id].movedTo, '2026-11-26');
 });
 
 // 7. Repetição, pausa e sugestão (sem progressão automática só pelo calendário)
@@ -207,7 +207,11 @@ test('registros inválidos são ignorados sem apagar os válidos', () => {
   assert.deepEqual(Object.keys(logs), [ok.id]);
   const s = rp.sanitizeRunSettings({ startDate: '2026-11-25', days: { easy: 9 }, easyPace: [450, 400], decisions: { 1: 'repeat', x: 'next', 2: 'pular' } });
   assert.equal(s.startDate, '2026-11-23', 'início vira segunda-feira');
-  assert.equal(s.days.easy, 2, 'dia inválido volta ao padrão');
+  assert.equal(s.days.easy, 1, 'sem configuração salva: dias do padrão');
+  const saved = rp.sanitizeRunSettings({ confirmed: true, days: { easy: 2, tempo: 4, long: 0, regen: 6, strength: [1, 5] } });
+  assert.deepEqual([saved.days.easy, saved.days.long], [2, 0], 'configuração salva pelo usuário é mantida');
+  const savedBad = rp.sanitizeRunSettings({ confirmed: true, days: { easy: 9 } });
+  assert.equal(savedBad.days.easy, 1, 'dia inválido volta ao padrão');
   assert.deepEqual(s.easyPace, [400, 450], 'faixa de ritmo ordenada');
   assert.deepEqual(s.decisions, { 1: 'repeat' });
 });
@@ -245,7 +249,7 @@ test('rotinas: corrida vem do plano, postura sem repetir o flexor, força para c
 
 test('dia personalizado mantém a corrida da semana (não congela distância)', () => {
   let s = { ...st.emptyStore, run: settings() };
-  const tuesday1 = '2026-11-24', tuesday2 = '2026-12-01';
+  const tuesday1 = '2026-11-23', tuesday2 = '2026-11-30'; // segundas (corrida leve)
   const d1 = day.resolveDayPlan(s, tuesday1, tuesday1);
   s = { ...s, overrides: { [d1.key]: d1.plan.sections.map((x) => (x.id === 'aquec' ? { ...x, items: x.items.slice(1) } : x)) } };
   const logs = byslot(rp.workoutsOfWeek(st.planCtx(s, tuesday1), 0));
@@ -259,13 +263,13 @@ test('dia personalizado mantém a corrida da semana (não congela distância)', 
 
 test('progresso do dia ignora itens opcionais e a corrida', () => {
   const s = { ...st.emptyStore, run: settings() };
-  const d = day.resolveDayPlan(s, '2026-11-28', '2026-11-28'); // sábado regenerativo
+  const d = day.resolveDayPlan(s, '2026-11-29', '2026-11-29'); // domingo: trote leve curto (opcional)
   const keys = day.itemKeys(d.plan);
   assert.equal(keys.some((k) => k.startsWith('corrida:')), false);
-  let s2 = day.setDayDone(s, '2026-11-28', keys, true);
-  assert.equal(prog.dayRatio(s2, '2026-11-28'), 1);
-  s2 = day.toggleItem(s2, '2026-11-28', keys[0], keys);
-  assert.ok(prog.dayRatio(s2, '2026-11-28') < 1);
+  let s2 = day.setDayDone(s, '2026-11-29', keys, true);
+  assert.equal(prog.dayRatio(s2, '2026-11-29'), 1);
+  s2 = day.toggleItem(s2, '2026-11-29', keys[0], keys);
+  assert.ok(prog.dayRatio(s2, '2026-11-29') < 1);
 });
 
 test('orientações de segurança a partir do registro', () => {

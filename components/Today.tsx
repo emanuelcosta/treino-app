@@ -110,7 +110,11 @@ export default function Today() {
       {!vm.settings.confirmed && (
         <div className="welcome">
           <h2>Seu plano de 10 km em 8 semanas</h2>
-          <p>Corrida leve na terça, corrida com variação na quinta, longão no domingo e regenerativo opcional no sábado. Fortalecimento na segunda e na sexta. Começa em {shortDate(vm.settings.startDate)}.</p>
+          <p>
+            Corrida leve na {DAY_NAMES[vm.settings.days.easy].toLowerCase()}, corrida com variação na {DAY_NAMES[vm.settings.days.tempo].toLowerCase()} e longão na {DAY_NAMES[vm.settings.days.long].toLowerCase()}
+            {vm.settings.availableDays === 4 ? `, com trote leve curto opcional no ${DAY_NAMES[vm.settings.days.regen].toLowerCase()}` : ''}.
+            {vm.settings.strengthPref !== 'nenhum' ? ` Fortalecimento na ${DAY_NAMES[vm.settings.days.strength[0]].toLowerCase()} e na ${DAY_NAMES[vm.settings.days.strength[1]].toLowerCase()}.` : ''} Começa em {shortDate(vm.settings.startDate)}.
+          </p>
           <div className="row"><Link href="/semana#configurar" className="btn primary">Revisar dias e ritmos</Link></div>
         </div>
       )}

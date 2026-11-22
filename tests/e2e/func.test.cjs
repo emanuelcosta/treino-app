@@ -13,12 +13,12 @@ const store = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('tre
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('dialog', (d) => d.accept());
-  // segunda-feira 23/11/2026: Calistenia A (força, com anotação e descanso)
-  await page.clock.setFixedTime(new Date('2026-11-23T08:00:00'));
-  const DATE = '2026-11-23';
+  // terça-feira 24/11/2026: Calistenia A (força, com anotação e descanso)
+  await page.clock.setFixedTime(new Date('2026-11-24T08:00:00'));
+  const DATE = '2026-11-24';
 
   await page.goto(BASE + '/');
-  // plano começando nesta semana, calistenia A/B nos dias de força (segunda e sexta)
+  // plano começando nesta semana, calistenia A/B nos dias de força (terça e quinta)
   await page.evaluate(() => localStorage.setItem('treino-app:v1', JSON.stringify({ done: {}, run: { startDate: '2026-11-23', confirmed: true, strengthPref: 'calistenia' } })));
   await page.reload();
   ok('Hoje = Calistenia A', /Calistenia A/.test(await page.locator('h1').innerText()));
@@ -100,11 +100,11 @@ const store = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('tre
   ok('restaurar padrão', names2[0].startsWith('Agachamento') && !(await page.getByText('Treino personalizado por você.').isVisible()));
 
   // outro dia = prévia
-  await page.getByRole('tab', { name: /^Domingo/ }).click();
-  ok('prévia de domingo (longão 6 km)', /Longão/.test(await page.locator('h1').innerText()) && await page.getByText('Prévia de domingo').isVisible() && await page.getByText('Longão: 6 km').first().isVisible());
+  await page.getByRole('tab', { name: /^Sexta/ }).click();
+  ok('prévia de sexta (longão 6 km)', /Longão/.test(await page.locator('h1').innerText()) && await page.getByText('Prévia de sexta').isVisible() && await page.getByText('Longão: 6 km').first().isVisible());
   ok('prévia: check desabilitado', await page.locator('button.check').first().isDisabled());
   ok('aviso dos exames na corrida', await page.getByText('Antes de aumentar a carga').isVisible());
-  await page.getByRole('tab', { name: /^Segunda/ }).click();
+  await page.getByRole('tab', { name: /^Terça/ }).click();
 
   // treino guiado
   await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('treino-app:v1')); s.done = {}; localStorage.setItem('treino-app:v1', JSON.stringify(s)); });
@@ -127,7 +127,7 @@ const store = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('tre
   await dlg.getByRole('button', { name: 'Sair' }).click();
 
   // marcha alta (fora do circuito, sem cronômetro): contador de séries
-  await page.getByRole('tab', { name: /^Terça/ }).click();
+  await page.getByRole('tab', { name: /^Segunda/ }).click();
   await page.getByRole('button', { name: 'Ver passo a passo' }).click();
   for (let k = 0; k < 40 && !(/Marcha alta/.test(await dlg.locator('h1').innerText())); k++) await dlg.getByRole('button', { name: 'Pular', exact: true }).click();
   ok('guiado: marcha alta série 1 de 2', await dlg.getByRole('button', { name: 'Concluir série 1' }).isVisible() && (await dlg.locator('.series').innerText()).includes('1 de 2'));
