@@ -1,10 +1,18 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import { GROUPS, exerciseList, type Group } from '@/lib/data';
+import { DAY_NAMES, GROUPS, exerciseList, type Group } from '@/lib/data';
 import { addCustomExercise, removeCustomExercise } from '@/lib/domain/store';
 import { useStore } from '@/lib/useStore';
 import CustomExerciseForm from './CustomExerciseForm';
+
+const RUN_STRENGTH: [string, string, string, string][] = [
+  ['ponte-gluteo', 'Ponte de glúteo', '2 x 12', 'Glúteos e posterior: estabilizam o quadril na passada.'],
+  ['agachamento', 'Agachamento livre', '2 x 10', 'Quadríceps e glúteos: absorvem o impacto.'],
+  ['panturrilha', 'Elevação de panturrilha', '2 x 15', 'Panturrilha e tendão de Aquiles: impulso e proteção.'],
+  ['bird-dog', 'Bird dog', '2 x 8 por lado', 'Tronco estável sem sobrecarregar a lombar.'],
+  ['prancha-lateral', 'Prancha lateral', '2 x 20 s por lado', 'Estabilidade lateral do tronco e do quadril.'],
+];
 
 export default function Library() {
   const { store, ready, update } = useStore();
@@ -21,6 +29,19 @@ export default function Library() {
     <>
       <h1>Exercícios</h1>
       <p className="muted">Toque em um exercício para ver o passo a passo e assistir aos vídeos.</p>
+      <section className="card runstrength">
+        <h2>Fortalecimento para corrida</h2>
+        <p className="small muted">
+          {store.run.strengthPref === 'nenhum' ? 'Desligado na configuração do plano (tela Semana).'
+            : `2 vezes por semana: ${DAY_NAMES[store.run.days.strength[0]].toLowerCase()} e ${DAY_NAMES[store.run.days.strength[1]].toLowerCase()}${store.run.strengthPref === 'calistenia' ? ' (você escolheu a calistenia completa A e B)' : ''}.`}
+        </p>
+        <ul className="bul">
+          {RUN_STRENGTH.map(([id, name, presc, why]) => (
+            <li key={id}><Link href={`/exercicios/${id}`}>{name}</Link>: {presc}. <span className="muted small">{why}</span></li>
+          ))}
+        </ul>
+        <p className="small muted">60 s de descanso entre as séries. Movimento controlado e amplitude sem dor. Se algum exercício provocar ou piorar dor na lombar, pare e troque por uma versão mais fácil ou pule.</p>
+      </section>
       <button className="btn" onClick={() => setCreating((c) => !c)}>{creating ? 'Fechar' : '+ Criar exercício'}</button>
       {creating && (
         <section className="card">

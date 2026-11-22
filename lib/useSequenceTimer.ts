@@ -1,7 +1,7 @@
 'use client';
 // Executa uma sequência de etapas (Segment[]) com contagem regressiva precisa.
 // Usa o relógio (Date.now) e não "contar ticks": se a tela apagar e voltar, o tempo continua certo.
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { cueChange, cueCount, cueDone, unlockAudio, type CuePrefs } from './cues';
 import { spoken, type Segment } from './domain/timer';
 
@@ -14,6 +14,8 @@ export function useSequenceTimer(segments: Segment[], prefs: CuePrefs, onDone?: 
   const [index, setIndex] = useState(0);
   const [status, setStatus] = useState<TimerStatus>('idle');
   const [now, setNow] = useState(() => Date.now());
+  // redesenha na hora após um toque (+5 s, pular...), mesmo se o relógio não mudou
+  const [, redraw] = useReducer((x: number) => x + 1, 0);
   const endAt = useRef(0);
   const paused = useRef((segments[0]?.seconds ?? 0) * 1000);
   const lastSec = useRef(-1);
@@ -82,6 +84,7 @@ export function useSequenceTimer(segments: Segment[], prefs: CuePrefs, onDone?: 
     endAt.current = Date.now() + ms;
     lastSec.current = -1;
     setNow(Date.now());
+    redraw();
     setStatus('running');
     if (status === 'idle' && segments[0]?.kind !== 'prep') cueChange(prefs, sayFor(segments[0]));
   };
@@ -96,6 +99,7 @@ export function useSequenceTimer(segments: Segment[], prefs: CuePrefs, onDone?: 
     if (status === 'running') endAt.current = Math.max(Date.now() + 1000, endAt.current + deltaSec * 1000);
     else if (status !== 'done') paused.current = Math.max(1000, paused.current + deltaSec * 1000);
     setNow(Date.now());
+    redraw();
   };
   /** Pula para a próxima etapa. */
   const skip = () => {
@@ -113,6 +117,7 @@ export function useSequenceTimer(segments: Segment[], prefs: CuePrefs, onDone?: 
     if (status === 'running') { endAt.current = Date.now() + segments[next].seconds * 1000; cueChange(prefs, sayFor(segments[next])); }
     else paused.current = segments[next].seconds * 1000;
     setNow(Date.now());
+    redraw();
   };
   function reset() {
     idx.current = 0;

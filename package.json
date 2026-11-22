@@ -1,11 +1,14 @@
 {
   "name": "treino-app",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "typecheck": "tsc --noEmit -p . --noUnusedLocals --noUnusedParameters",
+    "test": "tsc -p tsconfig.test.json && node --test tests/unit/*.test.cjs",
+    "test:e2e": "node tests/e2e/run-all.cjs"
   },
   "dependencies": {
     "next": "^16.4.6",
@@ -16,6 +19,7 @@
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "playwright-core": "^1.49.1",
     "typescript": "^7.0.2"
   }
 }

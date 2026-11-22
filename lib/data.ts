@@ -289,15 +289,6 @@ export type DayPlan = { dow: number; name: string; title: string; subtitle: stri
 export const DAY_NAMES = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 export const DAY_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-export type RunWeek = { week: number; seg: number; qua: number; sex: number; dom: number; note?: string };
-export const runPlan: RunWeek[] = [
-  { week: 1, seg: 4, qua: 5, sex: 7, dom: 3 },
-  { week: 2, seg: 5, qua: 5, sex: 8, dom: 3 },
-  { week: 3, seg: 5, qua: 6, sex: 9, dom: 4 },
-  { week: 4, seg: 4, qua: 5, sex: 6, dom: 3, note: 'Semana de descarga' },
-  { week: 5, seg: 5, qua: 6, sex: 10, dom: 4 },
-];
-
 /** Atalho: exercício com séries e quantidade por série. */
 const x = (ex: string, sets: number | string, reps: string, more: Partial<Item> = {}): Item => ({ ex, sets, reps, detail: '', ...more });
 
@@ -312,7 +303,6 @@ const runWarmup: Section = {
     x('marcha-alta', 2, '15 m', { detail: 'Volte caminhando entre as séries' }),
     x('calcanhar-gluteo', 2, '15 m', { detail: 'Volte caminhando entre as séries' }),
     x('circulos-quadril-tornozelo', 1, '8 a 10 para cada lado'),
-    { title: 'Acelerações leves', sets: '3 a 4', reps: '15 a 20 s', detail: 'Caminhe entre elas até recuperar o fôlego', hold: 15, rest: 45, optional: true },
   ],
 };
 
@@ -326,9 +316,8 @@ const cooldown: Section = {
   ],
 };
 
-const posture: Section = {
-  id: 'postura', title: 'Rotina de postura', subtitle: '5 a 8 min, 1 a 2 vezes por dia no trabalho',
-  items: [
+/** Rotina de postura (todo dia). skipFlexor: nos dias de corrida o flexor do quadril já está no alongamento pós-corrida. */
+const postureItems: Item[] = [
     x('recuo-queixo', 1, '10 repetições', { detail: 'Segure 3 s em cada' }),
     x('anjo-parede', 1, '8 a 10 repetições'),
     x('ext-toracica', 1, '8 a 10 repetições'),
@@ -337,8 +326,11 @@ const posture: Section = {
     x('gato-camelo', 1, '8 a 10 repetições'),
     x('livro-aberto', 1, '8 por lado'),
     x('along-punhos', 1, '20 a 30 s por lado', { hold: 20, sides: 2 }),
-  ],
-};
+];
+const posture = (skipFlexor = false): Section => ({
+  id: 'postura', title: 'Rotina de postura', subtitle: '5 a 8 min, 1 a 2 vezes por dia no trabalho',
+  items: skipFlexor ? postureItems.filter((it) => it.ex !== 'along-flexor-quadril') : postureItems,
+});
 
 const night: Section = {
   id: 'noite', title: 'Antes de dormir',
@@ -346,96 +338,178 @@ const night: Section = {
 };
 
 const strengthWarmup: Section = {
-  id: 'aquec', title: 'Aquecimento', subtitle: '5 min',
+  id: 'aquec', title: 'Aquecimento', subtitle: '5 min. A 1ª série de cada exercício pode ser mais leve.',
   items: [
     x('aquec-forca', 1, '10 de cada movimento'),
-    x('gato-camelo', 1, '8 repetições'),
-    x('agachamento', 1, '10 repetições'),
-    x('ponte-gluteo', 1, '10 repetições'),
+    x('circulos-quadril-tornozelo', 1, '8 a 10 para cada lado'),
+    x('gato-camelo', 1, '8 repetições', { detail: 'Movimento suave, sem forçar a lombar' }),
   ],
 };
 
 const circuitSubtitle = (rounds: number) =>
   `Em circuito: faça 1 série de cada exercício, em sequência (isso é 1 rodada), e repita ${rounds} vezes. Descanso de 45 a 60 s entre exercícios e 1 a 2 min entre rodadas.`;
 
-export function runKm(dow: number, week: number): number {
-  const w = runPlan[Math.min(Math.max(week, 1), 5) - 1];
-  return ({ 1: w.seg, 3: w.qua, 5: w.sex, 0: w.dom } as Record<number, number>)[dow] ?? 0;
+// ---------------- Plano de corrida de 10 km (8 semanas) ----------------
+export type DayRole = 'easy' | 'tempo' | 'long' | 'regen' | 'strength1' | 'strength2' | 'rest';
+export type StrengthPref = 'corrida' | 'calistenia' | 'nenhum';
+
+/** Treino da quinta: leve, com acelerações ou com blocos moderados. */
+export type TempoSpec = { km: number; reps?: number; minutes?: number; strides?: number; veryEasy?: boolean };
+export type PlanWeek = { week: number; easy: number; tempo: TempoSpec; long: number; note?: string };
+
+export const PLAN_ID = 'plano-10k';
+export const PLAN_WEEKS: PlanWeek[] = [
+  { week: 1, easy: 4, tempo: { km: 4, strides: 4 }, long: 6 },
+  { week: 2, easy: 4, tempo: { km: 4.5, reps: 3, minutes: 2 }, long: 7 },
+  { week: 3, easy: 4.5, tempo: { km: 5, reps: 3, minutes: 3 }, long: 7 },
+  { week: 4, easy: 4, tempo: { km: 4 }, long: 6, note: 'Semana de descarga: carga menor para recuperar' },
+  { week: 5, easy: 5, tempo: { km: 5, reps: 3, minutes: 4 }, long: 8 },
+  { week: 6, easy: 5, tempo: { km: 5, reps: 4, minutes: 3 }, long: 8.5 },
+  { week: 7, easy: 4, tempo: { km: 5, reps: 3, minutes: 3 }, long: 9 },
+  { week: 8, easy: 3, tempo: { km: 3, veryEasy: true }, long: 10, note: 'Semana do objetivo: carga menor antes dos 10 km' },
+];
+export const PLAN_LENGTH = PLAN_WEEKS.length;
+export const DELOAD_WEEK = 4;
+/** Recuperação leve entre os blocos moderados (segundos). */
+export const TEMPO_RECOVERY = 120;
+
+/** 4.5 -> "4,5" */
+export const km = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',');
+
+export function tempoTitle(t: TempoSpec): string {
+  if (t.strides) return `${km(t.km)} km leve + ${t.strides} acelerações de 20 s`;
+  if (t.reps && t.minutes) return `${km(t.km)} km com ${t.reps} × ${t.minutes} min moderados`;
+  return `${km(t.km)} km ${t.veryEasy ? 'muito leve' : 'leve'}`;
 }
 
-function buildDayPlan(dow: number, week: number): DayPlan {
-  const name = DAY_NAMES[dow];
-  const rounds = week === 4 ? 2 : 3;
-  const km = runKm(dow, week);
-  const base = { dow, name };
+const MODERATE = 'Moderado: esforço 6 a 7 de 10, controlado, sem sprint';
+const WARMUP_TEXT = 'Antes: 5 a 8 min de aquecimento dinâmico (lista abaixo). Os primeiros 10 min da corrida, mais leves.';
 
-  if (dow === 1 || dow === 3) {
-    return { ...base, title: 'Corrida', subtitle: `${km} km em ritmo de conversa`, kind: 'corrida',
-      sections: [runWarmup,
-        { id: 'corrida', title: 'Corrida', items: [{ title: `Correr ${km} km`, detail: 'Ritmo de conversa. Nos primeiros 10 min, mais leve ainda e acelere aos poucos.' }] },
-        cooldown, posture, night] };
+/** Texto e itens da corrida de um dia do plano. `pace` = faixa do ritmo leve (ex.: "6:20–7:00 min/km"). */
+export function runInfo(slot: 'easy' | 'tempo' | 'long' | 'regen', w: PlanWeek, pace: string) {
+  const easy = `Leve: ${pace}, conseguindo conversar`;
+  if (slot === 'easy') {
+    return { title: `Corrida leve: ${km(w.easy)} km`, km: w.easy, intensity: easy, warmup: WARMUP_TEXT,
+      objective: 'Construir base aeróbica sem cansar demais.',
+      items: [{ title: `Correr ${km(w.easy)} km leve`, detail: 'Ritmo de conversa. A distância inclui aquecimento e desaceleração.' }] as Item[] };
   }
-  if (dow === 5) {
-    return { ...base, title: 'Longão', subtitle: `${km} km: o treino mais importante da semana`, kind: 'corrida',
-      sections: [runWarmup,
-        { id: 'corrida', title: 'Longão', items: [{ title: `Correr ${km} km`, detail: 'Ritmo de conversa, bem controlado. Se estiver muito cansado, encurte em vez de pular.' }] },
-        cooldown, posture, night] };
+  if (slot === 'long') {
+    const goal = w.long >= 10;
+    return { title: goal ? `Longão: ${km(w.long)} km (o objetivo!)` : `Longão: ${km(w.long)} km`, km: w.long,
+      intensity: 'Leve, conversando; sem meta de velocidade', warmup: WARMUP_TEXT,
+      objective: goal ? 'Completar os 10 km com calma. Comece devagar e termine inteiro.' : 'Aumentar a resistência para chegar aos 10 km.',
+      items: [{ title: `Correr ${km(w.long)} km`, detail: 'Bem leve. Se estiver muito cansado, encurte em vez de pular. Hidrate-se.' }] as Item[] };
   }
-  if (dow === 0) {
-    return { ...base, title: 'Corrida leve', subtitle: `${km} km bem tranquilos para soltar as pernas`, kind: 'corrida',
-      sections: [runWarmup,
-        { id: 'corrida', title: 'Corrida leve', items: [{ title: `Correr ${km} km`, detail: 'Trote bem tranquilo. Se estiver pesado, troque por caminhada.' }] },
-        cooldown, posture, night] };
+  if (slot === 'regen') {
+    return { title: 'Trote leve curto (opcional)', km: 0, intensity: 'Muito leve, conversando', warmup: 'Comece caminhando 3 a 5 min.',
+      objective: 'Soltar as pernas e recuperar. Dia corrido? Encurte ou pule: não compense depois.',
+      items: [{ title: 'Trote leve ou caminhada', detail: '15 a 30 min, bem tranquilo (o tempo que der)', optional: true }] as Item[] };
   }
-  if (dow === 2) {
-    return { ...base, title: 'Calistenia A', subtitle: 'Pernas, costas e core: força para correr', kind: 'forca',
+  const t = w.tempo;
+  const items: Item[] = [{ title: `Correr ${tempoTitle(t)}`, detail: t.reps
+    ? 'Aqueça 10 min leve, faça os blocos moderados e termine leve até completar a distância.'
+    : 'Ritmo de conversa. A distância inclui aquecimento e desaceleração.' }];
+  if (t.strides) items.push({ title: `${t.strides} acelerações de 20 s`, sets: t.strides, reps: '20 s rápido, sem sprint', hold: 20, rest: 60,
+    detail: 'No fim da corrida. Entre elas, 1 min de trote leve ou caminhada.' });
+  if (t.reps && t.minutes) items.push({ title: `Blocos moderados: ${t.reps} × ${t.minutes} min`, sets: t.reps, reps: `${t.minutes} min moderado (6 a 7 de 10)`,
+    hold: t.minutes * 60, rest: TEMPO_RECOVERY, detail: '2 min de trote leve entre os blocos' });
+  return { title: `Corrida: ${tempoTitle(t)}`, km: t.km,
+    intensity: t.reps ? `${easy}; blocos: ${MODERATE.toLowerCase()}` : t.veryEasy ? `Muito leve: mais devagar que ${pace}` : easy,
+    warmup: WARMUP_TEXT,
+    objective: t.reps ? 'Sustentar um ritmo um pouco mais forte, com recuperação leve entre os blocos.'
+      : t.strides ? 'Base aeróbica e um pouco de soltura nas pernas com acelerações curtas.'
+      : t.veryEasy ? 'Chegar descansado ao longão de 10 km.' : 'Recuperar na semana de descarga.',
+    items };
+}
+
+const strengthRunning: Section = {
+  id: 'forca', title: 'Fortalecimento para corrida', log: true,
+  subtitle: '2 séries de cada, 60 s de descanso entre as séries. Lombar: movimento controlado e amplitude sem dor; pare se doer.',
+  items: [
+    x('ponte-gluteo', 2, '12 repetições', { rest: 60 }),
+    x('agachamento', 2, '10 repetições', { rest: 60 }),
+    x('panturrilha', 2, '15 repetições', { rest: 60 }),
+    x('bird-dog', 2, '8 por lado', { rest: 60 }),
+    x('prancha-lateral', 2, '20 s por lado', { hold: 20, sides: 2, rest: 30, detail: 'Estabilidade lateral do tronco e do quadril' }),
+  ],
+};
+
+const restDay: Section = {
+  id: 'descanso', title: 'Movimento leve', items: [{ title: 'Caminhada leve', detail: '15 a 30 min, opcional', optional: true }],
+};
+
+const mobility: Section = {
+  id: 'mobilidade', title: 'Mobilidade e alongamento', subtitle: '15 min, sem dor',
+  items: [
+    x('along-panturrilha', 1, '30 s por perna', { hold: 30, sides: 2 }),
+    x('along-posterior', 1, '30 s por perna', { hold: 30, sides: 2 }),
+    x('along-gluteo', 1, '30 s por lado', { hold: 30, sides: 2 }),
+    x('along-flexor-quadril', 1, '30 a 40 s por lado', { hold: 30, sides: 2 }),
+    x('mob-tornozelo', 1, '10 repetições por perna'),
+    x('gato-camelo', 1, '8 a 10 repetições'),
+    x('livro-aberto', 1, '8 por lado'),
+  ],
+};
+
+function calisthenics(which: 'A' | 'B', week: number): Omit<DayPlan, 'dow' | 'name'> {
+  const rounds = week === DELOAD_WEEK ? 2 : 3;
+  if (which === 'A') {
+    return { title: 'Calistenia A', subtitle: 'Pernas, costas e core: força para correr', kind: 'forca',
       sections: [strengthWarmup,
         { id: 'treino', title: `Treino: ${rounds} rodadas`, subtitle: circuitSubtitle(rounds), log: true,
           items: [
             x('agachamento', rounds, '12 a 15 repetições'),
             x('step-up', rounds, '8 a 10 por perna'),
-            x('stiff-unilateral', rounds, '8 a 10 por perna'),
+            x('stiff-unilateral', rounds, '8 a 10 por perna', { detail: 'Se a lombar incomodar, troque por ponte de glúteo' }),
             x('ponte-gluteo', rounds, '12 a 15 repetições'),
             x('panturrilha', rounds, '15 repetições'),
             x('barra-fixa', rounds, 'o máximo que conseguir + 3 negativas', { detail: 'Negativa: suba com ajuda e desça devagar, em 4 a 5 s' }),
             x('dead-bug', rounds, '8 por lado'),
           ] },
-        posture, night] };
+        posture(), night] };
   }
-  if (dow === 4) {
-    return { ...base, title: 'Calistenia B', subtitle: 'Parte superior e postura, pernas leves', kind: 'forca',
-      sections: [strengthWarmup,
-        { id: 'treino', title: `Treino: ${rounds} rodadas`, subtitle: circuitSubtitle(rounds), log: true,
-          items: [
-            x('flexao', rounds, 'o máximo com boa forma', { detail: 'Meta: 8 a 12 repetições' }),
-            x('remada-invertida', rounds, '8 a 12 repetições'),
-            x('flexao-fechada', rounds, '6 a 10 repetições'),
-            x('y-t-w', rounds, '6 de cada letra'),
-            x('bird-dog', rounds, '8 por lado'),
-            x('prancha-lateral', rounds, '20 a 30 s por lado', { hold: 20, sides: 2 }),
-            x('panturrilha', rounds, '15 repetições', { detail: 'Leve' }),
-          ] },
-        posture, night] };
-  }
-  return { ...base, title: 'Descanso ativo', subtitle: 'Recuperação: é aqui que você evolui', kind: 'descanso',
-    sections: [
-      { id: 'descanso', title: 'Movimento leve', items: [{ title: 'Caminhada ou pedal leve', detail: '20 a 40 min, bem tranquilo (opcional)', optional: true }] },
-      { id: 'mobilidade', title: 'Mobilidade e alongamento', subtitle: '15 min, sem dor',
+  return { title: 'Calistenia B', subtitle: 'Parte superior e postura, pernas leves', kind: 'forca',
+    sections: [strengthWarmup,
+      { id: 'treino', title: `Treino: ${rounds} rodadas`, subtitle: circuitSubtitle(rounds), log: true,
         items: [
-          x('along-panturrilha', 1, '30 s por perna', { hold: 30, sides: 2 }),
-          x('along-posterior', 1, '30 s por perna', { hold: 30, sides: 2 }),
-          x('along-gluteo', 1, '30 s por lado', { hold: 30, sides: 2 }),
-          x('along-flexor-quadril', 1, '30 a 40 s por lado', { hold: 30, sides: 2 }),
-          x('mob-tornozelo', 1, '10 repetições por perna'),
-          x('gato-camelo', 1, '8 a 10 repetições'),
-          x('livro-aberto', 1, '8 por lado'),
+          x('flexao', rounds, 'o máximo com boa forma', { detail: 'Meta: 8 a 12 repetições' }),
+          x('remada-invertida', rounds, '8 a 12 repetições'),
+          x('y-t-w', rounds, '6 de cada letra'),
+          x('bird-dog', rounds, '8 por lado'),
+          x('prancha-lateral', rounds, '20 a 30 s por lado', { hold: 20, sides: 2 }),
+          x('panturrilha', rounds, '15 repetições', { detail: 'Leve' }),
         ] },
-      posture, night] };
+      posture(), night] };
 }
 
-export function getDayPlan(dow: number, week: number): DayPlan {
-  const p = buildDayPlan(dow, week);
-  return { ...p, sections: p.sections.map((s) => ({ ...s, items: s.items.map((it, i) => ({ ...it, uid: `${s.id}:${i}` })) })) };
+/**
+ * Rotina de um dia: depende do papel do dia no plano (corrida leve, moderada, longão...),
+ * da semana do plano (1 a 8) e da preferência de fortalecimento.
+ */
+export function buildRoutine(dow: number, role: DayRole, week: number, strength: StrengthPref, pace: string): DayPlan {
+  const w = PLAN_WEEKS[Math.min(Math.max(week, 1), PLAN_LENGTH) - 1];
+  const base = { dow, name: DAY_NAMES[dow] };
+  let p: Omit<DayPlan, 'dow' | 'name'>;
+  if (role === 'easy' || role === 'tempo' || role === 'long') {
+    const r = runInfo(role, w, pace);
+    const label = role === 'easy' ? 'Corrida leve' : role === 'long' ? 'Longão' : 'Corrida com variação';
+    p = { title: label, subtitle: r.title.replace(/^[^:]+: /, ''), kind: 'corrida',
+      sections: [runWarmup, { id: 'corrida', title: label, items: r.items }, cooldown, posture(true), night] };
+  } else if (role === 'regen') {
+    const r = runInfo('regen', w, pace);
+    p = { title: 'Trote leve curto', subtitle: 'Opcional: 15 a 30 min bem leve e mobilidade', kind: 'descanso',
+      sections: [{ id: 'corrida', title: 'Trote leve curto (opcional)', items: r.items }, mobility, posture(true), night] };
+  } else if ((role === 'strength1' || role === 'strength2') && strength === 'calistenia') {
+    p = calisthenics(role === 'strength1' ? 'A' : 'B', week);
+  } else if ((role === 'strength1' || role === 'strength2') && strength === 'corrida') {
+    p = { title: 'Fortalecimento', subtitle: 'Glúteos, quadríceps, panturrilhas e tronco', kind: 'forca',
+      sections: [strengthWarmup, strengthRunning, posture(), night] };
+  } else {
+    p = { title: 'Descanso', subtitle: 'Recuperação: é aqui que você evolui', kind: 'descanso',
+      sections: [restDay, posture(), night] };
+  }
+  const plan = { ...base, ...p };
+  return { ...plan, sections: plan.sections.map((s) => ({ ...s, items: s.items.map((it, i) => ({ ...it, uid: `${s.id}:${i}` })) })) };
 }
 
 export function stepsOf(ex: Exercise): string[] {

@@ -1,21 +1,21 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { DAY_SHORT, type Exercise, type Item } from '@/lib/data';
+import { DAY_NAMES, DAY_SHORT, DELOAD_WEEK, PLAN_LENGTH, type Exercise, type Item } from '@/lib/data';
+import { parseDate, shortDate } from '@/lib/domain/dates';
 import { parseSetsInput, prescription } from '@/lib/domain/prescription';
 import { holdLabel } from '@/lib/domain/timer';
-import { DELOAD_WEEK, WEEKS } from '@/lib/domain/store';
+import type { Workout } from '@/lib/domain/runPlan';
 import { useTodayViewModel } from '@/lib/viewmodels/useTodayViewModel';
 import ExerciseDetail from './ExerciseDetail';
 import ExercisePicker from './ExercisePicker';
 import GuidedMode from './GuidedMode';
 import HoldTimerModal from './HoldTimerModal';
 import RestTimer from './RestTimer';
-
-const ORDER = [1, 2, 3, 4, 5, 6, 0];
+import RunWorkoutCard from './RunWorkoutCard';
 
 function ItemRow(p: {
-  item: Item; ex?: Exercise; checked: boolean; disabled: boolean; withLog: boolean; note: string;
+  item: Item; ex?: Exercise; checked: boolean; disabled: boolean; checkable: boolean; withLog: boolean; note: string;
   editing: boolean; first: boolean; last: boolean;
   onToggle: () => void; onNote: (v: string) => void; onPatch: (patch: Partial<Item>) => void;
   onMove: (dir: -1 | 1) => void; onRemove: () => void; onTimer: () => void;
@@ -51,10 +51,12 @@ function ItemRow(p: {
   }
 
   return (
-    <li className={`item ${checked ? 'done' : ''}`}>
-      <button className="check" onClick={p.onToggle} disabled={disabled} aria-pressed={checked} aria-label={`${checked ? 'Desmarcar' : 'Marcar'}: ${name}`}>
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10" /></svg>
-      </button>
+    <li className={`item ${checked && p.checkable ? 'done' : ''}`}>
+      {p.checkable ? (
+        <button className="check" onClick={p.onToggle} disabled={disabled} aria-pressed={checked} aria-label={`${checked ? 'Desmarcar' : 'Marcar'}: ${name}`}>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10" /></svg>
+        </button>
+      ) : <span className="checkspace" aria-hidden="true" />}
       <div className="itembody">
         <div className="itemtitle">{name}{item.optional && <span className="tag">opcional</span>}{ex?.custom && <span className="tag">meu</span>}</div>
         {presc && <div className="itempresc">{presc}</div>}
@@ -85,6 +87,11 @@ export default function Today() {
 
   const { plan, isToday, editing, customized, progress } = vm;
   const dayLabel = plan.name.toLowerCase();
+  const weekText = vm.todayPhase === 'antes' ? `Plano de 10 km começa em ${shortDate(vm.settings.startDate)}`
+    : vm.todayPhase === 'depois' ? 'Plano de 10 km concluído'
+    : vm.todayPhase === 'pausa' ? 'Plano de 10 km: semana de pausa'
+    : `Plano de 10 km · semana ${vm.todayWeek} de ${PLAN_LENGTH}${vm.todayWeek === DELOAD_WEEK ? ' (descarga)' : ''}`;
+  const runCard = (w: Workout) => <RunWorkoutCard key={w.id} w={w} log={vm.runLogs[w.id]} today={vm.today} onSave={(input) => vm.saveRun(w, input)} />;
 
   return (
     <>
@@ -95,15 +102,35 @@ export default function Today() {
           <p className="muted">{plan.subtitle}</p>
         </div>
         <div className="side">
-          <label className="weeksel">
-            <span className="small muted">Semana do plano</span>
-            <select value={vm.week} onChange={(e) => vm.changeWeek(Number(e.target.value))}>
-              {WEEKS.map((w) => (<option key={w} value={w}>{w}{w === DELOAD_WEEK ? ' (descarga)' : ''}</option>))}
-            </select>
-          </label>
+          <Link href="/semana" className="weekpill">{weekText}</Link>
           <Link href="/ajuda" className="small">Como usar</Link>
         </div>
       </header>
+
+      {!vm.settings.confirmed && (
+        <div className="welcome">
+          <h2>Seu plano de 10 km em 8 semanas</h2>
+          <p>
+            Corrida leve na {DAY_NAMES[vm.settings.days.easy].toLowerCase()}, corrida com variação na {DAY_NAMES[vm.settings.days.tempo].toLowerCase()} e longão na {DAY_NAMES[vm.settings.days.long].toLowerCase()}
+            {vm.settings.availableDays === 4 ? `, com trote leve curto opcional no ${DAY_NAMES[vm.settings.days.regen].toLowerCase()}` : ''}.
+            {vm.settings.strengthPref !== 'nenhum' ? ` Fortalecimento na ${DAY_NAMES[vm.settings.days.strength[0]].toLowerCase()} e na ${DAY_NAMES[vm.settings.days.strength[1]].toLowerCase()}.` : ''} Começa em {shortDate(vm.settings.startDate)}.
+          </p>
+          <div className="row"><Link href="/semana#configurar" className="btn primary">Revisar dias e ritmos</Link></div>
+        </div>
+      )}
+
+      {vm.needsDecision && vm.prevWeek !== null && (
+        <div className="notice decision" role="region" aria-label="Confirmar semana">
+          <p><b>Nova semana.</b> {vm.suggestion === 'repeat'
+            ? `A semana ${vm.prevWeek} ficou incompleta (menos de 2 corridas ou sem longão). Sugestão: repetir a semana ${vm.prevWeek}.`
+            : `Sugestão: avançar para a semana ${Math.min(vm.prevWeek + 1, PLAN_LENGTH)}.`} Você decide:</p>
+          <div className="row">
+            {vm.prevWeek < PLAN_LENGTH && <button className={vm.suggestion === 'next' ? 'btn primary' : 'btn'} onClick={() => vm.decideWeek('next')}>Avançar para a semana {vm.prevWeek + 1}</button>}
+            <button className={vm.suggestion === 'repeat' ? 'btn primary' : 'btn'} onClick={() => vm.decideWeek('repeat')}>Repetir a semana {vm.prevWeek}</button>
+            <button className="btn" onClick={() => vm.decideWeek('pause')}>Pausar esta semana</button>
+          </div>
+        </div>
+      )}
 
       {!vm.seenHelp && (
         <div className="welcome">
@@ -112,7 +139,7 @@ export default function Today() {
             <li>Veja o treino do dia. Use as abas Seg a Dom para espiar os outros dias.</li>
             <li>Toque em <b>Como fazer + vídeo</b> para aprender cada exercício passo a passo.</li>
             <li>Toque em <b>Iniciar treino guiado</b> para fazer um exercício de cada vez, com descanso automático.</li>
-            <li>Marque o que fez. Quer mudar o treino? Toque em <b>Editar treino</b>.</li>
+            <li>Marque o que fez e registre a corrida (distância, tempo e esforço). Quer mudar o treino? Toque em <b>Editar treino</b>.</li>
           </ol>
           <div className="row">
             <button className="btn primary" onClick={vm.dismissWelcome}>Entendi</button>
@@ -122,15 +149,18 @@ export default function Today() {
       )}
 
       <div className="days" role="tablist" aria-label="Dia da semana">
-        {ORDER.map((d) => (
-          <button key={d} role="tab" aria-selected={vm.dow === d} className={`day ${vm.dow === d ? 'sel' : ''} ${d === vm.todayDow ? 'today' : ''} ${vm.customizedDays.has(d) ? 'custom' : ''}`}
-            onClick={() => vm.selectDay(d)}>
-            {DAY_SHORT[d]}
-          </button>
-        ))}
+        {vm.weekDates.map((d) => {
+          const dow = parseDate(d).getDay();
+          return (
+            <button key={d} role="tab" aria-selected={vm.date === d} aria-label={`${DAY_NAMES[dow]} ${shortDate(d)}`}
+              className={`day ${vm.date === d ? 'sel' : ''} ${d === vm.today ? 'today' : ''}`} onClick={() => vm.selectDate(d)}>
+              {DAY_SHORT[dow]}<span className="daynum">{d.slice(8, 10)}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {!isToday && <p className="preview">Prévia de {dayLabel}. Você marca os exercícios no próprio dia.</p>}
+      {!isToday && <p className="preview">Prévia de {dayLabel}, {shortDate(vm.date)}. Você marca os exercícios no próprio dia{vm.runs.here.length ? '; a corrida pode ser registrada depois' : ''}.</p>}
       {customized && <p className="preview">Treino personalizado por você. <button className="link" onClick={vm.edit.restore}>Restaurar padrão</button></p>}
 
       <div className="actions">
@@ -138,19 +168,19 @@ export default function Today() {
           {isToday ? 'Iniciar treino guiado' : 'Ver passo a passo'}
         </button>
         <button className="btn" onClick={vm.toggleEditing}>{editing ? 'Concluir edição' : 'Editar treino'}</button>
-        {isToday && !editing && (
+        {isToday && !editing && progress.total > 0 && (
           <button className={progress.dayDone ? 'btn' : 'btn ok'} onClick={vm.toggleDayDone}>{progress.dayDone ? 'Desmarcar dia' : 'Marcar dia como feito'}</button>
         )}
       </div>
 
       {editing && (
-        <p className="preview">Modo edição: mude repetições, a ordem, remova ou adicione exercícios. As mudanças valem para toda {dayLabel}.</p>
+        <p className="preview">Modo edição: mude repetições, a ordem, remova ou adicione exercícios. As mudanças valem para todo dia de &quot;{plan.title.toLowerCase()}&quot;. A corrida vem do plano e muda a cada semana.</p>
       )}
 
-      {isToday && !editing && (
+      {isToday && !editing && progress.total > 0 && (
         <div className="progress" aria-label={`Progresso do dia: ${progress.pct}%`}>
           <div className="bar"><div style={{ width: `${progress.pct}%` }} /></div>
-          <span className="small">{progress.dayDone ? 'Dia concluído ✓' : `${progress.doneCount} de ${progress.total} · ${progress.pct}%`}</span>
+          <span className="small">{progress.dayDone ? 'Exercícios do dia concluídos ✓' : `${progress.doneCount} de ${progress.total} exercícios · ${progress.pct}%`}</span>
         </div>
       )}
 
@@ -161,24 +191,40 @@ export default function Today() {
         </div>
       )}
 
-      {plan.sections.map((sec, si) => (
-        <section key={sec.id} className="card">
-          <h2>{sec.title}</h2>
-          {sec.subtitle && <p className="muted small">{sec.subtitle}</p>}
-          <ul className="items">
-            {sec.items.map((item, ii) => (
-              <ItemRow key={item.uid} item={item} ex={vm.exerciseOf(item.ex)} checked={vm.isDone(item.uid!)} disabled={!isToday}
-                withLog={!!sec.log} note={vm.noteOf(item.uid!)} editing={editing} first={ii === 0} last={ii === sec.items.length - 1}
-                onToggle={() => vm.toggle(item.uid!)} onNote={(v) => vm.writeNote(item.uid!, v)} onPatch={(pt) => vm.edit.patch(si, ii, pt)}
-                onMove={(dir) => vm.edit.move(si, ii, dir)} onRemove={() => vm.edit.remove(si, ii)} onTimer={() => vm.openTimer(si, ii)} />
-            ))}
-          </ul>
-          {editing && <button className="btn add" onClick={() => vm.openPicker(si)}>+ Adicionar exercício</button>}
-          {sec.id === 'corrida' && !editing && (
-            <Link href="/pomodoro" className="btn intervalbtn">Abrir pomodoro: correr e caminhar em blocos</Link>
-          )}
+      {vm.runs.movedIn.length > 0 && !editing && (
+        <section className="card">
+          <h2>Treino remarcado para este dia</h2>
+          {vm.runs.movedIn.map(runCard)}
         </section>
-      ))}
+      )}
+
+      {plan.sections.map((sec, si) => {
+        const isRun = sec.id === 'corrida';
+        const runHere = isRun ? [...vm.runs.here, ...vm.runs.movedAway] : [];
+        return (
+          <section key={sec.id} className="card">
+            <h2>{sec.title}</h2>
+            {sec.subtitle && <p className="muted small">{sec.subtitle}</p>}
+            {isRun && !editing && runHere.map(runCard)}
+            {isRun && !editing && runHere.length === 0 && vm.phase !== 'plano' && (
+              <p className="muted small">{vm.phase === 'antes' ? 'O plano ainda não começou: este é só um exemplo da semana 1.' : vm.phase === 'pausa' ? 'Semana de pausa: sem corrida do plano.' : 'Plano concluído. Configure um novo início na tela Semana.'}</p>
+            )}
+            {isRun && editing && <p className="muted small">A corrida vem do plano e não é editada aqui. Para mudar o dia, use a tela Semana.</p>}
+            <ul className="items">
+              {sec.items.map((item, ii) => (
+                <ItemRow key={item.uid} item={item} ex={vm.exerciseOf(item.ex)} checked={vm.isDone(item.uid!)} disabled={!isToday}
+                  checkable={!isRun} withLog={!!sec.log} note={vm.noteOf(item.uid!)} editing={editing && !isRun} first={ii === 0} last={ii === sec.items.length - 1}
+                  onToggle={() => vm.toggle(item.uid!)} onNote={(v) => vm.writeNote(item.uid!, v)} onPatch={(pt) => vm.edit.patch(si, ii, pt)}
+                  onMove={(dir) => vm.edit.move(si, ii, dir)} onRemove={() => vm.edit.remove(si, ii)} onTimer={() => vm.openTimer(si, ii)} />
+              ))}
+            </ul>
+            {editing && !isRun && <button className="btn add" onClick={() => vm.openPicker(si)}>+ Adicionar exercício</button>}
+            {isRun && !editing && plan.kind === 'corrida' && (
+              <Link href="/pomodoro" className="btn intervalbtn">Abrir pomodoro: correr e caminhar em blocos</Link>
+            )}
+          </section>
+        );
+      })}
 
       {editing && customized && <button className="btn danger" onClick={vm.edit.restore}>Restaurar treino padrão deste dia</button>}
 

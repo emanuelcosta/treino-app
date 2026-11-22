@@ -1,35 +1,127 @@
 'use client';
-import { DAY_NAMES, getDayPlan, runPlan } from '@/lib/data';
-import { DELOAD_WEEK, WEEKS, setWeek } from '@/lib/domain/store';
+import { useState } from 'react';
+import { DAY_NAMES, DELOAD_WEEK, km, PLAN_LENGTH, PLAN_WEEKS, tempoTitle } from '@/lib/data';
+import { addDays, dateKey, dowOf, shortDate } from '@/lib/domain/dates';
+import { resolveDayPlan } from '@/lib/domain/day';
+import {
+  calOf, decisionAt, planSpan, STATUS_LABEL, suggestRepeatLabel, weekHasLogs, weekStartOf, weekSummary, workoutsOfWeek,
+  type WeekDecision,
+} from '@/lib/domain/runPlan';
+import { planCtx, saveRunLog, setRunSettings, setWeekDecision } from '@/lib/domain/store';
 import { useStore } from '@/lib/useStore';
+import PlanSettingsForm from './PlanSettingsForm';
+import RunWorkoutCard from './RunWorkoutCard';
 
-const ORDER = [1, 2, 3, 4, 5, 6, 0];
+const DECISION_LABEL: Record<WeekDecision, string> = { next: 'Avançar no plano', repeat: 'Repetir a semana anterior', pause: 'Pausa (sem corrida do plano)' };
 
 export default function WeekView() {
   const { store, ready, update } = useStore();
+  const [today] = useState(() => dateKey(new Date()));
+  const [cal, setCal] = useState<number | null>(null);
   if (!ready) return <div className="muted">Carregando…</div>;
+
+  const ctx = planCtx(store, today);
+  const s = store.run;
+  const span = planSpan(ctx);
+  const curCal = Math.max(0, Math.min(calOf(s, today), span - 1));
+  const c = cal ?? curCal;
+  const sum = weekSummary(ctx, c);
+  const dec = decisionAt(ctx, c);
+  const locked = weekHasLogs(store.runLogs, c);
+  const workouts = workoutsOfWeek(ctx, c);
+  const start = weekStartOf(s, c);
+  const dates = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  const pct = sum.plannedKm ? Math.min(100, Math.round((sum.doneKm / sum.plannedKm) * 100)) : 0;
+  const hasLogs = Object.keys(store.runLogs).length > 0;
+  const weekTitle = sum.week === null ? (dec.decision === 'pause' ? 'Semana de pausa' : 'Fora do plano') : `Semana ${sum.week} de ${PLAN_LENGTH}`;
+  const repeatOf = dec.decision === 'repeat' && sum.week !== null;
+  const suggestion = suggestRepeatLabel(ctx, c);
+
+  const decide = (d: WeekDecision | null) => update((st) => setWeekDecision(st, c, d));
 
   return (
     <>
       <h1>Semana</h1>
-      <label className="weeksel inline">
-        <span>Semana do plano</span>
-        <select value={store.week} onChange={(e) => update((s) => setWeek(s, Number(e.target.value)))}>
-          {WEEKS.map((w) => (<option key={w} value={w}>{w}{w === DELOAD_WEEK ? ' (descarga)' : ''}</option>))}
-        </select>
-      </label>
 
       <section className="card">
-        <h2>Plano de corrida</h2>
-        <p className="muted small">Todos os treinos em ritmo de conversa (você consegue falar frases inteiras).</p>
+        <div className="weeknav">
+          <button className="btn" onClick={() => setCal(Math.max(0, c - 1))} disabled={c <= 0} aria-label="Semana anterior">‹</button>
+          <div className="weeknav-title">
+            <b>{weekTitle}{repeatOf ? ' (repetição)' : ''}{sum.week === DELOAD_WEEK ? ' · descarga' : ''}</b>
+            <span className="small muted">{shortDate(start)} a {shortDate(addDays(start, 6))}{c === calOf(s, today) ? ' · esta semana' : ''}</span>
+          </div>
+          <button className="btn" onClick={() => setCal(Math.min(span - 1, c + 1))} disabled={c >= span - 1} aria-label="Próxima semana">›</button>
+        </div>
+
+        {sum.runsPlanned > 0 && (
+          <div className="weeksum">
+            <div className="progress" aria-label={`Quilometragem da semana: ${km(sum.doneKm)} de ${km(sum.plannedKm)} km`}>
+              <div className="bar"><div style={{ width: `${pct}%` }} /></div>
+              <span className="small"><b>{km(sum.doneKm)}</b> de {km(sum.plannedKm)} km</span>
+            </div>
+            <p className="small">Corridas concluídas: <b>{sum.runsDone} de {sum.runsPlanned}</b>{sum.runsMissed ? ` · não realizadas: ${sum.runsMissed}` : ''} · Longão: {sum.longDone ? <b>{km(sum.longDone)} km</b> : 'pendente'} (planejado {km(sum.longPlanned)} km)</p>
+          </div>
+        )}
+
+        <div className="decisionbox">
+          <label>Como esta semana começa
+            <select value={dec.auto ? '' : dec.decision} disabled={locked}
+              onChange={(e) => decide(e.target.value ? (e.target.value as WeekDecision) : null)} aria-label="Decisão da semana">
+              <option value="">Sugestão do app: {DECISION_LABEL[dec.decision].toLowerCase()}</option>
+              <option value="next">{DECISION_LABEL.next}</option>
+              {c > 0 && <option value="repeat">{DECISION_LABEL.repeat}</option>}
+              <option value="pause">{DECISION_LABEL.pause}</option>
+            </select>
+          </label>
+          <p className="small muted">{locked ? 'Esta semana já tem treinos registrados: a decisão ficou fixa para não mudar o histórico.' : 'Repetir ou pausar não duplica treinos: só muda qual semana do plano vale aqui. Nada aumenta para compensar.'}</p>
+          {suggestion && <p className="small">{suggestion}</p>}
+        </div>
+      </section>
+
+      <section className="card">
+        <h2>Dias</h2>
+        <ul className="calendar">
+          {dates.map((d) => {
+            const day = resolveDayPlan(store, d, today);
+            const ws = workouts.filter((w) => w.scheduled === d);
+            return (
+              <li key={d} className={d === today ? 'is-today' : ''}>
+                <div className="calday"><b>{DAY_NAMES[dowOf(d)]}</b><span className="small muted">{shortDate(d)}</span></div>
+                <div className="calbody">
+                  {ws.length === 0 && <span className={day.plan.kind === 'descanso' ? 'muted' : ''}>{day.plan.title}{day.plan.kind === 'descanso' ? '' : `: ${day.plan.subtitle}`}</span>}
+                  {ws.map((w) => {
+                    const log = store.runLogs[w.id];
+                    return (
+                      <div key={w.id} className="calrun">
+                        <div className="calrun-head">
+                          <span>{w.title}</span>
+                          <span className={`badge b-${log?.status ?? 'pendente'}`}>{STATUS_LABEL[log?.status ?? 'pendente']}</span>
+                        </div>
+                        <RunWorkoutCard compact w={w} log={log} today={today} onSave={(input) => update((st) => saveRunLog(st, w, input, today))} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        {workouts.length === 0 && <p className="muted small">Sem corridas do plano nesta semana.</p>}
+      </section>
+
+      <section className="card">
+        <h2>Plano de 10 km em 8 semanas</h2>
+        <p className="muted small">As distâncias incluem aquecimento e desaceleração. Leve = conseguindo conversar. Moderado = esforço 6 a 7 de 10, sem sprint, com 2 min de trote leve entre os blocos.</p>
         <div className="tablewrap">
           <table>
-            <thead><tr><th>Semana</th><th>Seg</th><th>Qua</th><th>Sex (longão)</th><th>Dom (leve)</th></tr></thead>
+            <thead><tr><th>Semana</th><th>{DAY_NAMES[s.days.easy]}</th><th>{DAY_NAMES[s.days.tempo]}</th><th>{DAY_NAMES[s.days.long]}</th></tr></thead>
             <tbody>
-              {runPlan.map((r) => (
-                <tr key={r.week} className={r.week === store.week ? 'sel' : ''}>
-                  <td>{r.week}{r.note ? ` (${r.note.split(' ').pop()})` : ''}</td>
-                  <td>{r.seg} km</td><td>{r.qua} km</td><td>{r.sex} km</td><td>{r.dom} km</td>
+              {PLAN_WEEKS.map((w) => (
+                <tr key={w.week} className={w.week === sum.week ? 'sel' : ''}>
+                  <td>{w.week}{w.week === DELOAD_WEEK ? ' (descarga)' : w.week === PLAN_LENGTH ? ' (objetivo)' : ''}</td>
+                  <td>{km(w.easy)} km leve</td>
+                  <td>{tempoTitle(w.tempo)}</td>
+                  <td>{km(w.long)} km</td>
                 </tr>
               ))}
             </tbody>
@@ -37,41 +129,30 @@ export default function WeekView() {
         </div>
       </section>
 
-      <section className="card">
-        <h2>Rotina da semana {store.week}</h2>
-        <ul className="week">
-          {ORDER.map((d) => {
-            const p = getDayPlan(d, store.week);
-            return (
-              <li key={d}>
-                <b>{DAY_NAMES[d]}</b>
-                <span>{p.title}: {p.subtitle}</span>
-              </li>
-            );
-          })}
-        </ul>
-        <p className="muted small">Todo dia: rotina de postura no trabalho e prancha antes de dormir.</p>
+      <section className="card" id="configurar">
+        <h2>Configurar plano</h2>
+        <PlanSettingsForm settings={s} hasLogs={hasLogs} onSave={(next) => update((st) => setRunSettings(st, next))} />
       </section>
 
       <section className="card">
         <h2>Regras do plano</h2>
         <ul className="bul">
-          <li>Dor que passe de 2 a 3 dias: repita a semana anterior em vez de avançar.</li>
-          <li>Aumente o volume em cerca de 10% por vez.</li>
-          <li>Semana 4 é de descarga: a calistenia vai para 2 rodadas.</li>
-          <li>Longão cansado demais: encurte, não pule.</li>
-          <li>Pedalar leve no dia a dia ajuda na recuperação. Se o dia foi puxado, encurte o treino seguinte, principalmente antes do longão.</li>
+          <li>Corra leve quase sempre: se não consegue falar frases inteiras, diminua.</li>
+          <li>Perdeu um treino? Siga em frente, sem somar a distância em outro dia.</li>
+          <li>Semana incompleta, cansaço acumulado ou dor que dura 2 a 3 dias: repita a semana em vez de avançar.</li>
+          <li>Dor que muda a passada: pare de correr e procure um profissional de saúde.</li>
+          <li>A semana 4 é de descarga e a 8 tem carga menor antes dos 10 km.</li>
+          <li>Longão cansado demais: encurte, não pule. Hidrate-se.</li>
         </ul>
       </section>
 
       <section className="card">
         <h2>Ganhar força e massa</h2>
         <ul className="bul">
-          <li>Escolha uma faixa (ex.: 8 a 12). Quando fizer 3 séries no topo com boa forma, passe para uma variação mais difícil (veja em Exercícios).</li>
+          <li>Escolha uma faixa (ex.: 8 a 12). Quando fizer as séries no topo com boa forma, passe para uma variação mais difícil (veja em Exercícios).</li>
           <li>Termine as séries com 1 a 3 repetições sobrando.</li>
           <li>Proteína: uma referência comum é 1,6 a 2 g por kg por dia, distribuída nas refeições.</li>
           <li>Durma de 7 a 9 horas e coma o suficiente para o gasto da corrida.</li>
-          <li>A cada 4 semanas, reavalie: se está fácil, suba a variação; se acumula cansaço, repita a semana.</li>
         </ul>
       </section>
 
@@ -80,12 +161,13 @@ export default function WeekView() {
         <ul className="bul">
           <li>Topo do monitor na altura dos olhos, a um braço de distância.</li>
           <li>Pés apoiados, quadril um pouco acima dos joelhos, cotovelos a cerca de 90° e punhos retos.</li>
-          <li>Levante a cada 45 a 60 min por 1 a 2 min. A melhor postura é a próxima: varie.</li>
-          <li>Formigamento nas mãos ou dor persistente no pescoço ou nas costas merecem avaliação de um profissional de saúde.</li>
+          <li>Se o apoio lombar da cadeira empurra você para a frente, teste ajustar a altura ou a profundidade dele, ou sentar um pouco mais para trás com um apoio menor. Use o que for mais confortável.</li>
+          <li>Levante a cada 45 a 60 min por 1 a 2 min (o Pomodoro tem um modelo para isso). A melhor postura é a próxima: varie.</li>
+          <li>Formigamento, dor que irradia para a perna ou dor persistente nas costas merecem avaliação de um profissional de saúde.</li>
         </ul>
       </section>
 
-      <p className="muted small">Plano de orientação geral. Não substitui avaliação de um médico ou de um profissional de educação física.</p>
+      <p className="muted small">Plano de orientação geral, não é prescrição individual. Não substitui avaliação de um médico ou de um profissional de educação física.</p>
     </>
   );
 }

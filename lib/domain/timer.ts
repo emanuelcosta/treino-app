@@ -97,6 +97,8 @@ export const INTERVAL_PRESETS: IntervalPreset[] = [
     cfg: { warm: 300, cool: 300, reps: 6, work: { label: 'Trote leve', seconds: 180 }, easy: walkShort(60), long: walkLong(180), longEvery: 0 } },
   { id: 'trote-variado', name: 'Trote com variação', note: 'Trote leve e 1 min um pouco mais rápido (ainda conseguindo falar frases curtas).',
     cfg: { warm: 300, cool: 300, reps: 6, work: { label: 'Um pouco mais rápido', seconds: 60 }, easy: { label: 'Trote leve', seconds: 240 }, long: walkLong(180), longEvery: 0 } },
+  { id: 'pausas-trabalho', name: 'Pausas no trabalho (sentado)', note: 'Para dias de computador: a cada 50 min, levante 3 min, caminhe e mude de posição. Opcional.',
+    cfg: { warm: 0, cool: 0, reps: 4, work: { label: 'Trabalho sentado', seconds: 50 * 60 }, easy: { label: 'Levante, caminhe e mude de posição', seconds: 180 }, long: walkLong(600), longEvery: 0 } },
   { id: 'caminhada-ritmo', name: 'Caminhada com ritmo', note: 'Dia leve ou recuperação: caminhada rápida e caminhada leve.',
     cfg: { warm: 180, cool: 180, reps: 8, work: { label: 'Caminhada rápida', seconds: 120 }, easy: { label: 'Caminhada leve', seconds: 60 }, long: walkLong(180), longEvery: 0 } },
 ];
