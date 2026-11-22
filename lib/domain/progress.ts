@@ -5,9 +5,12 @@ import { dateKey, type Store } from './store';
 export const GOOD_DAY = 0.8;
 
 export function dayRatio(s: Store, key: string): number {
+  const st = s.dayStats[key];
+  if (st) return st.total ? Math.min(1, st.done / st.total) : 0;
+  // dias registrados antes da v1.5 (sem dayStats)
   const total = s.totals[key] ?? 0;
   if (!total) return 0;
-  return Object.keys(s.done[key] ?? {}).length / total;
+  return Math.min(1, Object.keys(s.done[key] ?? {}).length / total);
 }
 
 export type CalendarDay = { key: string; date: Date };
