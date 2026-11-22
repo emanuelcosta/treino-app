@@ -1,0 +1,12 @@
+node_modules
+.next
+next-env.d.ts
+*.tsbuildinfo
+
+.vercel
+.env*
+
+# notas pessoais (perfil e saúde) - ficam só no computador
+PROMPT_CONTINUAR.md
+# build dos testes
+.test-build
