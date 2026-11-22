@@ -13,6 +13,8 @@ import GuidedMode from './GuidedMode';
 import HoldTimerModal from './HoldTimerModal';
 import RestTimer from './RestTimer';
 import RunWorkoutCard from './RunWorkoutCard';
+import { dayRange } from '@/lib/domain/strava';
+import { useStrava } from '@/lib/useStrava';
 
 function ItemRow(p: {
   item: Item; ex?: Exercise; checked: boolean; disabled: boolean; checkable: boolean; withLog: boolean; note: string;
@@ -83,7 +85,11 @@ function ItemRow(p: {
 
 export default function Today() {
   const vm = useTodayViewModel();
+  const strava = useStrava();
   if (!vm.ready) return <div className="muted">Carregando…</div>;
+  const importer = strava.connected
+    ? { logs: vm.runLogs, load: (d: string) => { const r = dayRange(d); return strava.loadRuns(r.after, r.before); } }
+    : undefined;
 
   const { plan, isToday, editing, customized, progress } = vm;
   const dayLabel = plan.name.toLowerCase();
@@ -91,7 +97,7 @@ export default function Today() {
     : vm.todayPhase === 'depois' ? 'Plano de 10 km concluído'
     : vm.todayPhase === 'pausa' ? 'Plano de 10 km: semana de pausa'
     : `Plano de 10 km · semana ${vm.todayWeek} de ${PLAN_LENGTH}${vm.todayWeek === DELOAD_WEEK ? ' (descarga)' : ''}`;
-  const runCard = (w: Workout) => <RunWorkoutCard key={w.id} w={w} log={vm.runLogs[w.id]} today={vm.today} onSave={(input) => vm.saveRun(w, input)} />;
+  const runCard = (w: Workout) => <RunWorkoutCard key={w.id} w={w} log={vm.runLogs[w.id]} today={vm.today} importer={importer} onSave={(input) => vm.saveRun(w, input)} />;
 
   return (
     <>

@@ -20,11 +20,11 @@ const ok = (name, cond, extra = '') => results.push(`${cond ? 'OK  ' : 'FALHA'} 
   // espera o pré-cache das páginas de exercício
   let n = 0;
   for (let i = 0; i < 30; i++) {
-    n = await page.evaluate(async () => (await (await caches.open('treino-pages-v4')).keys()).length);
+    n = await page.evaluate(async () => (await (await caches.open((await caches.keys()).find((k) => k.startsWith('treino-pages-')) || 'x')).keys()).length);
     if (n >= 38) break;
     await page.waitForTimeout(1000);
   }
-  const stat = await page.evaluate(async () => (await (await caches.open('treino-static-v4')).keys()).length);
+  const stat = await page.evaluate(async () => (await (await caches.open((await caches.keys()).find((k) => k.startsWith('treino-static-')) || 'x')).keys()).length);
   ok('páginas no cache', n >= 38, `${n} páginas, ${stat} arquivos estáticos`);
 
   // marca um item online
@@ -66,6 +66,9 @@ const ok = (name, cond, extra = '') => results.push(`${cond ? 'OK  ' : 'FALHA'} 
   ok('sem erros de console inesperados', real.length === 0, real.slice(0, 3).join(' | '));
   console.log(results.join('\n'));
   console.log('erros brutos:', errors.length);
+  const fails = results.filter((r) => r.startsWith('FALHA')).length;
+  console.log(`\n${results.length - fails} OK, ${fails} falhas`);
+  process.exitCode = fails ? 1 : 0;
   await browser.close();
 })().catch((e) => { console.log(results.join('\n')); console.error('ERRO', e); process.exit(1); });
 

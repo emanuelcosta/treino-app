@@ -3,7 +3,7 @@
 const { spawnSync } = require('node:child_process');
 const path = require('node:path');
 
-const suites = ['func.test.cjs', 'timer.test.cjs', 'plan.test.cjs', 'offline.test.cjs'];
+const suites = ['func.test.cjs', 'timer.test.cjs', 'plan.test.cjs', 'strava.test.cjs', 'offline.test.cjs'];
 let failed = 0;
 for (const s of suites) {
   console.log(`\n=== ${s} ===`);

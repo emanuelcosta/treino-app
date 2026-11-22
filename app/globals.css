@@ -297,3 +297,12 @@ ol.steps.big li { margin: 10px 0; }
 .runstrength .bul li { margin-bottom: 4px; }
 .runcard.compact { background: transparent; border: 0; padding: 0; margin: 2px 0 0; }
 .calrun { margin-bottom: 6px; }
+
+/* Strava */
+.btn.strava { background: #fc4c02; border-color: #fc4c02; color: #fff; font-weight: 600; display: inline-block; text-decoration: none; }
+.btn.strava-outline { border-color: #fc4c02; color: #c43c00; }
+@media (prefers-color-scheme: dark) { .btn.strava-outline { color: #ff7a40; } }
+.suggest { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 6px; }
+.suggest li { display: flex; justify-content: space-between; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.suggest li > div { display: grid; min-width: 0; }
+.stravaimport { display: grid; gap: 4px; }

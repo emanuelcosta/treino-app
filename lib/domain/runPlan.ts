@@ -146,6 +146,10 @@ export type RunLog = {
   rpe?: number;
   discomfort?: Discomfort;
   notes?: string;
+  /** de onde vieram distância e tempo */
+  source?: 'manual' | 'strava';
+  /** atividade do Strava usada (cada uma só pode ir para um treino) */
+  stravaId?: number;
   updatedAt: string;
 };
 export type RunLogs = Record<string, RunLog>;
@@ -297,7 +301,7 @@ export function workoutsOn(ctx: PlanCtx, date: string): { here: Workout[]; moved
   };
 }
 
-export type LogInput = Partial<Pick<RunLog, 'status' | 'movedTo' | 'km' | 'seconds' | 'rpe' | 'discomfort' | 'notes'>>;
+export type LogInput = Partial<Pick<RunLog, 'status' | 'movedTo' | 'km' | 'seconds' | 'rpe' | 'discomfort' | 'notes' | 'source' | 'stravaId'>>;
 
 /** Cria ou atualiza o registro de um treino. Um registro por treino (mesmo id): nunca duplica. */
 export function upsertLog(logs: RunLogs, w: Workout, input: LogInput, now = new Date()): RunLogs {
@@ -313,6 +317,8 @@ export function upsertLog(logs: RunLogs, w: Workout, input: LogInput, now = new 
   if (next.seconds !== undefined && !(next.seconds > 0)) delete next.seconds;
   if (next.rpe !== undefined && !(Number.isInteger(next.rpe) && next.rpe >= 1 && next.rpe <= 10)) delete next.rpe;
   if (next.notes !== undefined) next.notes = next.notes.slice(0, 1000);
+  if (next.stravaId !== undefined && !(Number.isInteger(next.stravaId) && next.stravaId > 0)) delete next.stravaId;
+  if (next.status !== 'concluido') { delete next.stravaId; if (next.source === 'strava') delete next.source; }
   return { ...logs, [w.id]: next };
 }
 

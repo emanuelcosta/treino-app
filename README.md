@@ -21,11 +21,14 @@ npm run test:e2e   # testes no navegador (usa o Chrome instalado via playwright-
 `BASE=https://...` em `npm run test:e2e` testa outro endereço.
 
 ## Publicar (Vercel)
-O projeto `treino-app` está ligado pela CLI da Vercel (pasta `.vercel/`, fora do Git). Não há variáveis de ambiente.
+O projeto `treino-app` está ligado pela CLI da Vercel (pasta `.vercel/`, fora do Git). Variáveis de ambiente só para o Strava (opcional, veja `.env.example`).
 ```bash
 npx vercel deploy          # prévia
 npx vercel deploy --prod   # produção
 ```
+
+## Strava (opcional)
+Importa distância e tempo das corridas do Strava (só leitura, você confirma cada importação). Para ativar, crie o app em strava.com/settings/api e cadastre `STRAVA_CLIENT_ID` e `STRAVA_CLIENT_SECRET` na Vercel: passo a passo em `docs/STRAVA.md`. Sem elas, o resto do app funciona normalmente.
 
 ## Dados
 Tudo fica no navegador (`localStorage`, chave `treino-app:v1`): sem servidor, sem conta. Para não perder dados ao trocar de aparelho ou limpar o navegador, use Progresso > Exportar backup / Importar backup. Dados de versões anteriores são lidos e completados sem apagar nada (veja `docs/AUDITORIA.md`).
