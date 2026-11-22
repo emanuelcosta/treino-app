@@ -5,6 +5,7 @@ import {
   defaultRunSettings, freezeDecisions, sanitizeRunLogs, sanitizeRunSettings, upsertLog,
   type LogInput, type PlanCtx, type RunLogs, type RunSettings, type WeekDecision, type Workout,
 } from './runPlan';
+import { usedStravaIds, type StravaRun } from './strava';
 import { DEFAULT_INTERVALS, sanitizeIntervals, type IntervalConfig } from './timer';
 
 export { dateKey };
@@ -92,8 +93,24 @@ export const setRunSettings = (s: Store, run: RunSettings): Store => ({ ...s, ru
 
 /** Registra o treino (sem duplicar) e fixa as decisões das semanas até ele, para o histórico não mudar depois. */
 export function saveRunLog(s: Store, w: Workout, input: LogInput, today: string): Store {
+  if (input.stravaId !== undefined && usedStravaIds(s.runLogs, w.id).has(input.stravaId)) {
+    input = { ...input, stravaId: undefined, source: 'manual' }; // atividade já usada em outro treino
+  }
   const decisions = freezeDecisions(planCtx(s, today), w.cal);
   return { ...s, run: { ...s.run, decisions }, runLogs: upsertLog(s.runLogs, w, input) };
+}
+
+/**
+ * Usa uma corrida do Strava no registro de um treino (distância e tempo em movimento).
+ * Devolve null se essa atividade já está em outro treino (não duplica).
+ */
+export function importStravaRun(s: Store, w: Workout, run: StravaRun, today: string): Store | null {
+  if (usedStravaIds(s.runLogs, w.id).has(run.id)) return null;
+  const prev = s.runLogs[w.id];
+  return saveRunLog(s, w, {
+    status: 'concluido', km: run.km, seconds: run.seconds, source: 'strava', stravaId: run.id,
+    notes: prev?.notes ?? `Strava: ${run.name}`,
+  }, today);
 }
 
 export function setWeekDecision(s: Store, cal: number, decision: WeekDecision | null): Store {

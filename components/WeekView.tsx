@@ -7,7 +7,10 @@ import {
   calOf, decisionAt, planSpan, STATUS_LABEL, suggestRepeatLabel, weekHasLogs, weekStartOf, weekSummary, workoutsOfWeek,
   type WeekDecision,
 } from '@/lib/domain/runPlan';
-import { planCtx, saveRunLog, setRunSettings, setWeekDecision } from '@/lib/domain/store';
+import { importStravaRun, planCtx, saveRunLog, setRunSettings, setWeekDecision } from '@/lib/domain/store';
+import { dayRange } from '@/lib/domain/strava';
+import { useStrava } from '@/lib/useStrava';
+import StravaPanel from './StravaPanel';
 import { useStore } from '@/lib/useStore';
 import PlanSettingsForm from './PlanSettingsForm';
 import RunWorkoutCard from './RunWorkoutCard';
@@ -18,6 +21,7 @@ export default function WeekView() {
   const { store, ready, update } = useStore();
   const [today] = useState(() => dateKey(new Date()));
   const [cal, setCal] = useState<number | null>(null);
+  const strava = useStrava();
   if (!ready) return <div className="muted">Carregando…</div>;
 
   const ctx = planCtx(store, today);
@@ -38,6 +42,9 @@ export default function WeekView() {
   const suggestion = suggestRepeatLabel(ctx, c);
 
   const decide = (d: WeekDecision | null) => update((st) => setWeekDecision(st, c, d));
+  const importer = strava.connected
+    ? { logs: store.runLogs, load: (d: string) => { const r = dayRange(d); return strava.loadRuns(r.after, r.before); } }
+    : undefined;
 
   return (
     <>
@@ -97,7 +104,7 @@ export default function WeekView() {
                           <span>{w.title}</span>
                           <span className={`badge b-${log?.status ?? 'pendente'}`}>{STATUS_LABEL[log?.status ?? 'pendente']}</span>
                         </div>
-                        <RunWorkoutCard compact w={w} log={log} today={today} onSave={(input) => update((st) => saveRunLog(st, w, input, today))} />
+                        <RunWorkoutCard compact w={w} log={log} today={today} importer={importer} onSave={(input) => update((st) => saveRunLog(st, w, input, today))} />
                       </div>
                     );
                   })}
@@ -108,6 +115,12 @@ export default function WeekView() {
         </ul>
         {workouts.length === 0 && <p className="muted small">Sem corridas do plano nesta semana.</p>}
       </section>
+
+      <StravaPanel strava={strava} ctx={ctx} cal={c} onApply={(w, run) => {
+        if (!importStravaRun(store, w, run, today)) return false; // atividade já usada em outro treino
+        update((st) => importStravaRun(st, w, run, today) ?? st);
+        return true;
+      }} />
 
       <section className="card">
         <h2>Plano de 10 km em 8 semanas</h2>

@@ -6,7 +6,7 @@
  *  - Outros domínios (YouTube etc.) não passam pelo cache.
  * Para forçar todo mundo a baixar tudo de novo, aumente VERSION.
  */
-const VERSION = 'v4';
+const VERSION = 'v5';
 const PAGES = `treino-pages-${VERSION}`;
 const STATIC = `treino-static-${VERSION}`;
 const CORE = ['/', '/semana', '/pomodoro', '/exercicios', '/progresso', '/ajuda', '/manifest.webmanifest', '/icon.svg'];
@@ -97,6 +97,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // YouTube e afins: direto na rede
   if (url.pathname === '/sw.js') return;
+  if (url.pathname.startsWith('/api/')) return; // dados pessoais e login do Strava: sempre direto na rede
 
   if (req.mode === 'navigate') {
     event.respondWith(networkFirst(req, PAGES, url.pathname));
