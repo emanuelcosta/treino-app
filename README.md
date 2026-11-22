@@ -1,6 +1,8 @@
 # Treino: corrida, força e postura
 
-App em Next.js (App Router, TypeScript) com a rotina diária de treino, vídeo em cada exercício, treino guiado passo a passo, edição de treinos e acompanhamento de progresso.
+App em Next.js (App Router, TypeScript) com plano de corrida de 5 km para 10 km em 8 semanas, registro das corridas, fortalecimento, rotina de postura, vídeo e ilustração em cada exercício, treino guiado, cronômetros e acompanhamento de progresso.
+
+Publicado em https://treino-app-delta-gold.vercel.app
 
 ## Rodar
 ```bash
@@ -8,30 +10,43 @@ npm install
 npm run dev        # http://localhost:3000
 npm run build && npm start
 ```
-Deploy simples: Vercel (sem variáveis de ambiente).
 
-## Dados (versão 1)
-Tudo é salvo na memória do navegador (`localStorage`, chave `treino-app:v1`). Não há servidor nem banco de dados na nuvem. Para não perder dados ao trocar de aparelho ou limpar o navegador, use Progresso > Exportar backup / Importar backup.
+## Verificar
+```bash
+npm run typecheck  # TypeScript estrito (inclui variáveis e imports sem uso)
+npm test           # testes das regras (node --test, sem biblioteca extra)
+npm run build && npm start -- -p 3100   # em outro terminal:
+npm run test:e2e   # testes no navegador (usa o Chrome instalado via playwright-core)
+```
+`BASE=https://...` em `npm run test:e2e` testa outro endereço.
 
-## Offline (cache do navegador)
-Depois da primeira visita com internet, o service worker (`public/sw.js`) guarda páginas e arquivos no cache do navegador e o app abre sem internet. Só funciona no build de produção (`npm run build && npm start`) ou em HTTPS (Vercel); no `npm run dev` fica desligado. Para forçar todos a baixarem de novo, aumente `VERSION` em `public/sw.js`. Vídeos do YouTube precisam de internet.
+## Publicar (Vercel)
+O projeto `treino-app` está ligado pela CLI da Vercel (pasta `.vercel/`, fora do Git). Não há variáveis de ambiente.
+```bash
+npx vercel deploy          # prévia
+npx vercel deploy --prod   # produção
+```
+
+## Dados
+Tudo fica no navegador (`localStorage`, chave `treino-app:v1`): sem servidor, sem conta. Para não perder dados ao trocar de aparelho ou limpar o navegador, use Progresso > Exportar backup / Importar backup. Dados de versões anteriores são lidos e completados sem apagar nada (veja `docs/AUDITORIA.md`).
+
+## Offline
+Depois da primeira visita, o service worker (`public/sw.js`) guarda o app no navegador e ele abre sem internet (só no build de produção ou em HTTPS). Para forçar todos a baixarem de novo, aumente `VERSION` em `public/sw.js`. Vídeos precisam de internet.
 
 ## Funcionalidades
-- **Hoje**: treino do dia (Seg a Dom), semana do plano (1 a 5), checklist, anotações, cronômetro de descanso, "Marcar dia como feito".
-- **Treino guiado**: um exercício por vez com passo a passo, vídeo e descanso automático.
-- **Editar treino**: alterar repetições, reordenar, remover, adicionar da biblioteca, criar exercício próprio (passos + link do YouTube), item livre, restaurar padrão.
-- **Exercícios**: biblioteca com busca, passo a passo numerado e vídeos.
-- **Cronômetro**: nos exercícios de tempo (alongamentos, prancha, caminhada) o app conta os segundos de cada série e de cada lado, com bipes, voz e vibração.
-- **Pomodoro**: corrida/caminhada em blocos (padrão: 5 min correndo, pausa curta de 1 min 30 s, pausa longa de 3 min a cada 4 blocos), tudo configurável.
-- **Semana**, **Progresso** (28 dias, sequência, backup) e **Como usar** (guia e glossário).
+- **Hoje**: treino do dia (rotina pelo papel do dia no plano), corrida com distância, intensidade, duração estimada e objetivo; registro de status (concluído, adiado, não realizado), distância, tempo, ritmo calculado, esforço (1 a 10), desconforto e observações. Nada é marcado sozinho. Confirmação de semana nova (avançar, repetir ou pausar).
+- **Semana**: calendário com navegação, km planejado x realizado, corridas concluídas, decisão da semana, registro de treinos passados, tabela das 8 semanas e configuração (dias, início, ritmo leve, fortalecimento).
+- **Progresso**: rumo aos 10 km, km por semana, longões, ritmo médio, tempo, consistência (planejado em azul, realizado em laranja) e o mapa dos exercícios do dia.
+- **Exercícios**: biblioteca com busca, passo a passo, ilustrações, vídeos e o fortalecimento para corrida.
+- **Pomodoro**: corrida/caminhada em blocos e modelo opcional de pausas para quem trabalha sentado.
+- **Treino guiado**, **Editar treino**, **Cronômetro** nos exercícios de tempo e **Como usar**.
 
 ## Estrutura
-- `lib/data.ts`: exercícios, rotinas por dia e plano de corrida (edite aqui o treino padrão).
-- `lib/domain/`: regras puras (dia, edição do treino, progresso, backup), sem React.
-- `lib/illustrations/`: ilustrações passo a passo (poses do boneco por exercício em `poses.ts`); desenho em `components/Figure.tsx`.
-- `lib/storage/repository.ts`: onde os dados são salvos (hoje `localStorage`; troque aqui para usar nuvem).
-- `lib/useStore.ts`: hook React que carrega e salva pelo repositório.
-- `lib/viewmodels/useTodayViewModel.ts`: estado e ações da tela Hoje (a tela `components/Today.tsx` só desenha).
-- `components/`: telas e componentes. `app/`: rotas.
+- `lib/data.ts`: exercícios, plano de 8 semanas e rotinas por papel do dia.
+- `lib/domain/`: regras puras, sem React: `runPlan.ts` (plano, calendário, registros, resumos, segurança), `day.ts`, `workoutEdit.ts`, `store.ts` (modelo e migração), `timer.ts`, `progress.ts`, `dates.ts`.
+- `lib/storage/repository.ts`: onde os dados são salvos (hoje `localStorage`).
+- `lib/viewmodels/useTodayViewModel.ts`: estado e ações da tela Hoje.
+- `components/`: telas e componentes (`RunWorkoutCard`, `PlanSettingsForm`, `RunProgress`...). `app/`: rotas.
+- `tests/unit` (regras) e `tests/e2e` (navegador). `docs/AUDITORIA.md`: diagnóstico e auditoria dos treinos.
 
 Orientação geral. Não substitui avaliação de médico ou profissional de educação física.
