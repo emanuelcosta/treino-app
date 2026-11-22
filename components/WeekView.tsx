@@ -95,7 +95,7 @@ export default function WeekView() {
                       <div key={w.id} className="calrun">
                         <div className="calrun-head">
                           <span>{w.title}</span>
-                          <span className={`badge b-${log?.status ?? 'pendente'}`}>{STATUS_LABEL[log?.status ?? 'pendente']}{log?.km ? ` · ${km(log.km)} km` : ''}</span>
+                          <span className={`badge b-${log?.status ?? 'pendente'}`}>{STATUS_LABEL[log?.status ?? 'pendente']}</span>
                         </div>
                         <RunWorkoutCard compact w={w} log={log} today={today} onSave={(input) => update((st) => saveRunLog(st, w, input, today))} />
                       </div>
@@ -131,7 +131,7 @@ export default function WeekView() {
 
       <section className="card" id="configurar">
         <h2>Configurar plano</h2>
-        <PlanSettingsForm key={JSON.stringify(s)} settings={s} hasLogs={hasLogs} onSave={(next) => update((st) => setRunSettings(st, next))} />
+        <PlanSettingsForm settings={s} hasLogs={hasLogs} onSave={(next) => update((st) => setRunSettings(st, next))} />
       </section>
 
       <section className="card">

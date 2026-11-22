@@ -295,3 +295,5 @@ ol.steps.big li { margin: 10px 0; }
 .ch-tip { position: absolute; top: 0; transform: translateX(-50%); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: .8rem; display: grid; gap: 2px; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,.15); white-space: nowrap; z-index: 2; }
 .runtable td, .runtable th { font-size: .85rem; }
 .runstrength .bul li { margin-bottom: 4px; }
+.runcard.compact { background: transparent; border: 0; padding: 0; margin: 2px 0 0; }
+.calrun { margin-bottom: 6px; }

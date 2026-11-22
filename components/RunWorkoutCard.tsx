@@ -64,8 +64,8 @@ export default function RunWorkoutCard({ w, log, today, onSave, compact = false 
   const tips = guidance(log);
 
   return (
-    <div className={`runcard s-${status}`}>
-      <div className="runhead">
+    <div className={`runcard s-${status}${compact ? ' compact' : ''}`}>
+      {!compact && <div className="runhead">
         <div>
           <div className="runtitle">{w.title}</div>
           <div className="small muted">
@@ -73,15 +73,16 @@ export default function RunWorkoutCard({ w, log, today, onSave, compact = false 
           </div>
         </div>
         <span className={`badge b-${status}`}>{STATUS_LABEL[status]}</span>
-      </div>
+      </div>}
 
-      <dl className="runfacts">
+      {!compact && <dl className="runfacts">
         {w.plannedKm > 0 && <div><dt>Planejado</dt><dd>{km(w.plannedKm)} km</dd></div>}
         {w.estimate && <div><dt>Duração estimada</dt><dd>{Math.round(w.estimate[0] / 60)}–{Math.round(w.estimate[1] / 60)} min</dd></div>}
         <div className="wide"><dt>Intensidade</dt><dd>{w.intensity}</dd></div>
         <div className="wide"><dt>Objetivo</dt><dd>{w.objective}</dd></div>
-        {!compact && <div className="wide"><dt>Aquecimento</dt><dd>{w.warmup}</dd></div>}
-      </dl>
+        <div className="wide"><dt>Aquecimento</dt><dd>{w.warmup}</dd></div>
+      </dl>}
+      {compact && log?.movedTo && <p className="small">Adiado para {weekday(log.movedTo)}.</p>}
       {log?.km && <p className="small"><b>Realizado:</b> {km(log.km)} km{log.seconds ? ` em ${formatDuration(log.seconds)} · ${paceLabel(paceOf(log.km, log.seconds))}` : ''}{log.rpe ? ` · esforço ${log.rpe}/10` : ''}</p>}
       {!compact && <p className="small muted">Pare se sentir dor que mude a sua passada. O ritmo é só uma referência: calor, subidas e cansaço mudam o ritmo certo do dia.</p>}
 
